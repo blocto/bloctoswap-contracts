@@ -103,9 +103,9 @@ pub contract TeleportedTetherToken: FungibleToken {
     //
     // Function that creates and returns a new teleport admin resource
     //
-    pub fun createNewTeleportAdmin(): @TeleportAdmin {
+    pub fun createNewTeleportAdmin(feeCollector: @FungibleToken.Vault{FungibleToken.Receiver}): @TeleportAdmin {
       emit TeleportAdminCreated()
-      return <-create TeleportAdmin()
+      return <-create TeleportAdmin(feeCollector: feeCollector, inwardFee: 0.01, outwardFee: 1.0)
     }
   }
 
@@ -131,7 +131,7 @@ pub contract TeleportedTetherToken: FungibleToken {
     //
     pub fun teleportIn(amount: UFix64, from: [Uint8]): @TeleportedTetherToken.Vault {
       pre {
-        amount > UFix64(0): "Amount minted must be greater than zero"
+        amount > inwardFee: "Amount minted must be greater than inward teleport fee"
       }
       TeleportedTetherToken.totalSupply = TeleportedTetherToken.totalSupply + Amount
       emit TokensTeleportedIn(amount: amount, from: from)
