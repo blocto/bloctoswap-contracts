@@ -149,7 +149,7 @@ pub contract TeleportedTetherToken: FungibleToken {
     pub fun teleportIn(amount: UFix64, from: [UInt8]): @TeleportedTetherToken.Vault {
       pre {
         amount > self.inwardFee: "Amount minted must be greater than inward teleport fee"
-        from.length == 20: "Address should be 20 bytes"
+        from.length == 20: "Ethereum address should be 20 bytes"
       }
       TeleportedTetherToken.totalSupply = TeleportedTetherToken.totalSupply + amount
       emit TokensTeleportedIn(amount: amount, from: from)
@@ -170,7 +170,7 @@ pub contract TeleportedTetherToken: FungibleToken {
     //
     pub fun teleportOut(from: @FungibleToken.Vault, to: [UInt8]) {
       pre {
-        to.length == 20: "Address should be 20 bytes"
+        to.length == 20: "Ethereum address should be 20 bytes"
       }
       let vault <- from as! @TeleportedTetherToken.Vault
       let fee <- vault.withdraw(amount: self.outwardFee)
