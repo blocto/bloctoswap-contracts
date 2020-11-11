@@ -5,6 +5,15 @@ pub contract TeleportedTetherToken: FungibleToken {
   // Total supply of TeleportedTetherTokens in existence
   pub var totalSupply: UFix64
 
+  // Defines token vault storage path
+  pub let TokenStoragePath: Path
+
+  // Defines token vault public balance path
+  pub let TokenPublicBalancePath: Path
+
+  // Defines token vault public receiver path
+  pub let TokenPublicReceiverPath: Path
+
   // Event that is emitted when the contract is created
   pub event TokensInitialized(initialSupply: UFix64)
 
@@ -14,17 +23,11 @@ pub contract TeleportedTetherToken: FungibleToken {
   // Event that is emitted when tokens are deposited to a Vault
   pub event TokensDeposited(amount: UFix64, to: Address?)
 
-  // Event that is emitted when new tokens are minted
-  pub event TokensMinted(amount: UFix64)
+  // Event that is emitted when new tokens are teleported in from Ethereum (from: Ethereum Address, 20 bytes)
+  pub event TokensTeleportedIn(amount: UFix64, from: [UInt8])
 
-  // Event that is emitted when tokens are destroyed
-  pub event TokensBurned(amount: UFix64)
-
-  // Event that is emitted when new tokens are teleported in from Ethereum (from: Ethereum Address, 21 bytes)
-  pub event TokensTeleportedIn(amount: UFix64, from: [UInt8; 21])
-
-  // Event that is emitted when tokens are destroyed and teleported to Ethereum (to: Ethereum Address, 21 bytes)
-  pub event TokensTeleportedOut(amount: UFix64, to: [UInt8; 21])
+  // Event that is emitted when tokens are destroyed and teleported to Ethereum (to: Ethereum Address, 20 bytes)
+  pub event TokensTeleportedOut(amount: UFix64, to: [UInt8])
 
   // Event that is emitted when a new burner resource is created
   pub event TeleportAdminCreated()
@@ -63,7 +66,7 @@ pub contract TeleportedTetherToken: FungibleToken {
     pub fun withdraw(amount: UFix64): @FungibleToken.Vault {
       self.balance = self.balance - amount
       emit TokensWithdrawn(amount: amount, from: self.owner?.address)
-      return <-create Vault(balance: amount)
+      return <- create Vault(balance: amount)
     }
 
     // deposit
@@ -94,7 +97,7 @@ pub contract TeleportedTetherToken: FungibleToken {
   // account to be able to receive deposits of this token type.
   //
   pub fun createEmptyVault(): @FungibleToken.Vault {
-    return <-create Vault(balance: 0.0)
+    return <- create Vault(balance: 0.0)
   }
 
   pub resource Administrator {
@@ -103,10 +106,24 @@ pub contract TeleportedTetherToken: FungibleToken {
     //
     // Function that creates and returns a new teleport admin resource
     //
-    pub fun createNewTeleportAdmin(feeCollector: @FungibleToken.Vault{FungibleToken.Receiver}): @TeleportAdmin {
+    pub fun createNewTeleportAdmin(feeCollector: &TeleportedTetherToken.Vault{FungibleToken.Receiver}): @TeleportAdmin {
       emit TeleportAdminCreated()
-      return <-create TeleportAdmin(feeCollector: feeCollector, inwardFee: 0.01, outwardFee: 1.0)
+      return <- create TeleportAdmin(feeCollector: feeCollector, inwardFee: 0.01, outwardFee: 1.0)
     }
+  }
+
+  pub resource interface TeleportIn {
+    pub fun teleportIn(amount: UFix64, from: [UInt8]): @TeleportedTetherToken.Vault
+  }
+
+  pub resource interface TeleportOut {
+    pub fun teleportOut(from: @FungibleToken.Vault, to: [UInt8])
+  }
+
+  pub resource interface TeleportConfig {
+    pub fun updateInwardFee(fee: UFix64)
+
+    pub fun updateOutwardFee(fee: UFix64)
   }
 
   // TeleportAdmin resource
@@ -114,9 +131,9 @@ pub contract TeleportedTetherToken: FungibleToken {
   //  Resource object that has the capability to mint teleported tokens
   //  upon receiving teleport request from Ethereum side
   //
-  pub resource TeleportAdmin {
-    // receiver to collect teleport fee
-    pub var feeCollector: @TeleportedTetherToken.Vault{FungibleToken.Receiver}
+  pub resource TeleportAdmin: TeleportIn, TeleportOut, TeleportConfig {
+    // receiver reference to collect teleport fee
+    pub var feeCollector: &TeleportedTetherToken.Vault{FungibleToken.Receiver}
 
     // fee collected when token is teleported from Ethereum to Flow
     pub var inwardFee: UFix64
@@ -129,18 +146,19 @@ pub contract TeleportedTetherToken: FungibleToken {
     // Function that mints new tokens, adds them to the total supply,
     // and returns them to the calling context.
     //
-    pub fun teleportIn(amount: UFix64, from: [UInt8; 21]): @TeleportedTetherToken.Vault {
+    pub fun teleportIn(amount: UFix64, from: [UInt8]): @TeleportedTetherToken.Vault {
       pre {
-        amount > inwardFee: "Amount minted must be greater than inward teleport fee"
+        amount > self.inwardFee: "Amount minted must be greater than inward teleport fee"
+        from.length == 20: "Address should be 20 bytes"
       }
-      TeleportedTetherToken.totalSupply = TeleportedTetherToken.totalSupply + Amount
+      TeleportedTetherToken.totalSupply = TeleportedTetherToken.totalSupply + amount
       emit TokensTeleportedIn(amount: amount, from: from)
 
-      let vault <-create Vault(balance: amount)
-      let fee <- from vault.withdraw(inwardFee)
-      feeCollector.deposit(fee)
+      let vault <- create Vault(balance: amount)
+      let fee <- vault.withdraw(amount: self.inwardFee)
+      self.feeCollector.deposit(from: <-fee)
 
-      return vault
+      return <- vault
     }
 
     // teleportOut
@@ -150,17 +168,20 @@ pub contract TeleportedTetherToken: FungibleToken {
     // Note: the burned tokens are automatically subtracted from the 
     // total supply in the Vault destructor.
     //
-    pub fun teleportOut(from: @FungibleToken.Vault, to: [UInt8; 21]) {
+    pub fun teleportOut(from: @FungibleToken.Vault, to: [UInt8]) {
+      pre {
+        to.length == 20: "Address should be 20 bytes"
+      }
       let vault <- from as! @TeleportedTetherToken.Vault
-      let fee <- from vault.withdraw(outwardFee)
-      feeCollector.deposit(fee)
+      let fee <- vault.withdraw(amount: self.outwardFee)
+      self.feeCollector.deposit(from: <-fee)
 
       let amount = vault.balance
       destroy vault
       emit TokensTeleportedOut(amount: amount, to: to)
     }
 
-    pub fun updateFeeCollector(feeCollector: @FungibleToken.Vault{FungibleToken.Receiver}) {
+    pub fun updateFeeCollector(feeCollector: &TeleportedTetherToken.Vault{FungibleToken.Receiver}) {
       self.feeCollector = feeCollector
     }
 
@@ -172,39 +193,21 @@ pub contract TeleportedTetherToken: FungibleToken {
       self.outwardFee = fee
     }
 
-    init(feeCollector: @FungibleToken.Vault{FungibleToken.Receiver}, inwardFee: UFix64, outwardFee: UFix64) {
+    init(feeCollector: &TeleportedTetherToken.Vault{FungibleToken.Receiver}, inwardFee: UFix64, outwardFee: UFix64) {
       self.feeCollector = feeCollector
       self.inwardFee = inwardFee
       self.outwardFee = outwardFee
     }
   }
 
-  init(adminAccount: AuthAccount) {
+  init() {
     self.totalSupply = 0.0
-
-    // Create the Vault with the total supply of tokens and save it in storage
-    //
-    let vault <- create Vault(balance: self.totalSupply)
-    adminAccount.save(<-vault, to: /storage/teleportedTetherTokenVault)
-
-    // Create a public capability to the stored Vault that only exposes
-    // the `deposit` method through the `Receiver` interface
-    //
-    adminAccount.link<&TeleportedTetherToken.Vault{FungibleToken.Receiver}>(
-      /public/teleportedTetherTokenReceiver,
-      target: /storage/teleportedTetherTokenVault
-    )
-
-    // Create a public capability to the stored Vault that only exposes
-    // the `balance` field through the `Balance` interface
-    //
-    adminAccount.link<&TeleportedTetherToken.Vault{FungibleToken.Balance}>(
-      /public/teleportedTetherTokenBalance,
-      target: /storage/teleportedTetherTokenVault
-    )
+    self.TokenStoragePath = /storage/teleportedTetherTokenVault
+    self.TokenPublicBalancePath = /public/teleportedTetherTokenBalance
+    self.TokenPublicReceiverPath = /public/teleportedTetherTokenReceiver
 
     let admin <- create Administrator()
-    adminAccount.save(<-admin, to: /storage/teleportedTetherTokenAdmin)
+    self.account.save(<-admin, to: /storage/teleportedTetherTokenAdmin)
 
     // Emit an event that shows that the contract was initialized
     emit TokensInitialized(initialSupply: self.totalSupply)
