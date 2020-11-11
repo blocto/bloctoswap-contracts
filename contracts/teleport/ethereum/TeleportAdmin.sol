@@ -14,31 +14,31 @@ import "./Ownable.sol";
  * the admins.
  */
 contract TeleportAdmin is Ownable {
-    mapping(address => bool) private _isAdmin;
+  mapping(address => bool) private _isAdmin;
 
-    event AdminUpdated(address indexed account, bool indexed status);
+  event AdminUpdated(address indexed account, bool indexed status);
 
-    /**
-     * @dev Checks if an account is admin.
-     */
-    function isAdmin(address account) public view returns (bool) {
-        return _isAdmin[account];
-    }
+  /**
+    * @dev Checks if an account is admin.
+    */
+  function isAdmin(address account) public view returns (bool) {
+    return _isAdmin[account];
+  }
 
-    /**
-     * @dev Throws if called by any account other than the admin.
-     */
-    modifier onlyAdmin() {
-        require(isAdmin(_msgSender()), "TeleportAdmin: caller is not admin");
-        _;
-    }
+  /**
+    * @dev Throws if called by any account other than the admin.
+    */
+  modifier onlyAdmin() {
+    require(isAdmin(_msgSender()), "TeleportAdmin: caller is not admin");
+    _;
+  }
 
-    /**
-     * @dev Updates the admin status of an account.
-     * Can only be called by the current owner.
-     */
-    function updateAdmin(address account, bool status) public virtual onlyOwner {
-        emit AdminUpdated(account, status);
-        _isAdmin[account] = status;
-    }
+  /**
+    * @dev Updates the admin status of an account.
+    * Can only be called by the current owner.
+    */
+  function updateAdmin(address account, bool status) public virtual onlyOwner {
+    emit AdminUpdated(account, status);
+    _isAdmin[account] = status;
+  }
 }
