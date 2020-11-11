@@ -7,8 +7,7 @@ import "./TeleportAdmin.sol";
 import "./TetherToken.sol";
 
 contract TeleportCustody is TeleportAdmin {
-  address private _tokenAddress = 0xdAC17F958D2ee523a2206206994597C13D831ec7;
-  TetherToken private _tokenContract = TetherToken(_tokenAddress);
+  TetherToken private _tokenContract = TetherToken(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
   // Emmitted when user locks token and initiates teleport
   event Locked(uint256 amount, bytes8 indexed flowAddress, address indexed ethereumAddress);
@@ -50,7 +49,6 @@ contract TeleportCustody is TeleportAdmin {
     * @dev Owner updates the target lockup token address.
     */
   function updateTokenAddress(address tokenAddress) public onlyOwner {
-    _tokenAddress = tokenAddress;
     _tokenContract = TetherToken(tokenAddress);
   }
 }
