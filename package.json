@@ -1,0 +1,21 @@
+{
+  "name": "flowswap-contracts",
+  "version": "0.0.1",
+  "description": "Cadence and Solidity contracts used in FlowSwap",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/portto/flowswap-contracts.git"
+  },
+  "author": "portto",
+  "license": "MIT",
+  "scripts": {
+    "test": "echo 'no tests'",
+    "emulator:ethereum": "ganache-cli --mnemonic \"$(< .secret)\""
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "3.2.0",
+    "ganache-cli": "^6.12.1",
+    "truffle": "^5.1.52",
+    "truffle-hdwallet-provider": "^1.0.17"
+  }
+}
