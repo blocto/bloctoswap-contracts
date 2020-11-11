@@ -21,10 +21,10 @@ pub contract TeleportedTetherToken: FungibleToken {
   pub event TokensBurned(amount: UFix64)
 
   // Event that is emitted when new tokens are teleported in from Ethereum (from: Ethereum Address, 21 bytes)
-  pub event TokensTeleportedIn(amount: UFix64, from: [Uint8])
+  pub event TokensTeleportedIn(amount: UFix64, from: [UInt8; 21])
 
   // Event that is emitted when tokens are destroyed and teleported to Ethereum (to: Ethereum Address, 21 bytes)
-  pub event TokensTeleportedOut(amount: UFix64, to: [Uint8])
+  pub event TokensTeleportedOut(amount: UFix64, to: [UInt8; 21])
 
   // Event that is emitted when a new burner resource is created
   pub event TeleportAdminCreated()
@@ -129,7 +129,7 @@ pub contract TeleportedTetherToken: FungibleToken {
     // Function that mints new tokens, adds them to the total supply,
     // and returns them to the calling context.
     //
-    pub fun teleportIn(amount: UFix64, from: [Uint8]): @TeleportedTetherToken.Vault {
+    pub fun teleportIn(amount: UFix64, from: [UInt8; 21]): @TeleportedTetherToken.Vault {
       pre {
         amount > inwardFee: "Amount minted must be greater than inward teleport fee"
       }
@@ -150,7 +150,7 @@ pub contract TeleportedTetherToken: FungibleToken {
     // Note: the burned tokens are automatically subtracted from the 
     // total supply in the Vault destructor.
     //
-    pub fun teleportOut(from: @FungibleToken.Vault, to: [Uint8]) {
+    pub fun teleportOut(from: @FungibleToken.Vault, to: [UInt8; 21]) {
       let vault <- from as! @TeleportedTetherToken.Vault
       let fee <- from vault.withdraw(outwardFee)
       feeCollector.deposit(fee)
