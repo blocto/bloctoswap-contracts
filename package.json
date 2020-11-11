@@ -10,7 +10,8 @@
   "license": "MIT",
   "scripts": {
     "test": "echo 'no tests'",
-    "emulator:ethereum": "ganache-cli --mnemonic \"$(< .secret)\""
+    "emulator:ethereum": "ganache-cli --mnemonic \"$(< dev-mnemonic.txt)\"",
+    "emulator:flow": "flow emulator start"
   },
   "dependencies": {
     "@openzeppelin/contracts": "3.2.0",
