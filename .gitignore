@@ -1,1 +1,7 @@
+# System files
 .DS_Store
+.secret
+
+# Built artifacts
+build/
+node_modules/
