@@ -146,13 +146,19 @@ pub contract FlowSwapPair: FungibleToken {
     }
   }
 
-  // createEmptyBundle
+  // createEmptyTokenBundle
   //
   pub fun createEmptyTokenBundle(): @FlowSwapPair.TokenBundle {
     return <- create TokenBundle(
       fromToken1: <- (FlowToken.createEmptyVault() as! @FlowToken.Vault),
       fromToken2: <- (TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault)
     )
+  }
+
+  // createTokenBundle
+  //
+  pub fun createTokenBundle(fromToken1: @FlowToken.Vault, fromToken2: @TeleportedTetherToken.Vault): @FlowSwapPair.TokenBundle {
+    return <- create TokenBundle(fromToken1: <- fromToken1, fromToken2: <- fromToken2)
   }
 
   // mintTokens

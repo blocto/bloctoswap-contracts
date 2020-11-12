@@ -19,11 +19,14 @@ transaction {
     
     let token2Vault <- tetherVault.withdraw(amount: 10.0)
 
+    let adminRef = signer.borrow<&FlowSwapPair.Admin>(from: /storage/flowSwapPairAdmin)
+        ?? panic("Could not borrow a reference to Admin")
+
     let tokenBundle <- FlowSwapPair.createEmptyTokenBundle();
     tokenBundle.depositToken1(from: <- (token1Vault as! @FlowToken.Vault))
     tokenBundle.depositToken2(from: <- (token2Vault as! @TeleportedTetherToken.Vault))
 
-    let liquidityTokenVault <- FlowSwapPair.addLiquidity(from: <- tokenBundle)
+    let liquidityTokenVault <- adminRef.addInitialLiquidity(from: <- tokenBundle)
 
     let liquidityTokenRef = signer.borrow<&FlowSwapPair.Vault>(from: /storage/flowSwapPairTokenVault)
         ?? panic("Could not borrow a reference to Vault")
