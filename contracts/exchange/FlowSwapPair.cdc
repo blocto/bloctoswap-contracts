@@ -6,19 +6,26 @@ import TeleportedTetherToken from 0xTELEPORTEDTETHERTOKENADDRESS
 // Token1: FlowToken
 // Token2: TeleportedTetherToken
 pub contract FlowSwapPair: FungibleToken {
-  // TODO: implement AMM exchange
-
   // Total supply of FlowSwapExchange liquidity token in existence
   pub var totalSupply: UFix64
 
-  // Defines token vault storage path
-  pub let TokenStoragePath: Path
+  // Fee charged when performing token swap
+  pub var feePercentage: UFix64
 
-  // Defines token vault public balance path
-  pub let TokenPublicBalancePath: Path
+  // Controls FlowToken vault
+  access(contract) let token1VaultRef: &FlowToken.Vault
 
-  // Defines token vault public receiver path
-  pub let TokenPublicReceiverPath: Path
+  // Controls TeleportedTetherToken vault
+  access(contract) let token2VaultRef: &TeleportedTetherToken.Vault
+
+  // // Defines token vault storage path
+  // pub let TokenStoragePath: Path
+
+  // // Defines token vault public balance path
+  // pub let TokenPublicBalancePath: Path
+
+  // // Defines token vault public receiver path
+  // pub let TokenPublicReceiverPath: Path
 
   // Event that is emitted when the contract is created
   pub event TokensInitialized(initialSupply: UFix64)
@@ -80,7 +87,7 @@ pub contract FlowSwapPair: FungibleToken {
     // was a temporary holder of the tokens. The Vault's balance has
     // been consumed and therefore can be destroyed.
     pub fun deposit(from: @FungibleToken.Vault) {
-      let vault <- from as! @FlowSwapExchange.Vault
+      let vault <- from as! @FlowSwapPair.Vault
       self.balance = self.balance + vault.balance
       emit TokensDeposited(amount: vault.balance, to: self.owner?.address)
       vault.balance = 0.0
@@ -88,7 +95,7 @@ pub contract FlowSwapPair: FungibleToken {
     }
 
     destroy() {
-      FlowSwapExchange.totalSupply = FlowSwapExchange.totalSupply - self.balance
+      FlowSwapPair.totalSupply = FlowSwapPair.totalSupply - self.balance
     }
   }
 
@@ -148,17 +155,86 @@ pub contract FlowSwapPair: FungibleToken {
     )
   }
 
+  // mintTokens
+  //
+  // Function that mints new tokens, adds them to the total supply,
+  // and returns them to the calling context.
+  //
+  access(contract) fun mintTokens(amount: UFix64): @FlowSwapPair.Vault {
+    pre {
+      amount > UFix64(0): "Amount minted must be greater than zero"
+    }
+    FlowSwapPair.totalSupply = FlowSwapPair.totalSupply + amount
+    emit TokensMinted(amount: amount)
+    return <-create Vault(balance: amount)
+  }
+
+  // burnTokens
+  //
+  // Function that destroys a Vault instance, effectively burning the tokens.
+  //
+  // Note: the burned tokens are automatically subtracted from the 
+  // total supply in the Vault destructor.
+  //
+  access(contract) fun burnTokens(from: @FlowSwapPair.Vault) {
+    let vault <- from as! @FlowSwapPair.Vault
+    let amount = vault.balance
+    destroy vault
+    emit TokensBurned(amount: amount)
+  }
+
+  pub resource Admin {
+    pub fun addInitialLiquidity(from: @FlowSwapPair.TokenBundle): @FlowSwapPair.Vault {
+      pre {
+        FlowSwapPair.totalSupply == UFix64(0): "Pair already initialized"
+      }
+
+      let token1Vault <- from.withdrawToken1()
+      let token2Vault <- from.withdrawToken2()
+
+      assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
+      assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+
+      FlowSwapPair.token1VaultRef.deposit(from: <- token1Vault)
+      FlowSwapPair.token2VaultRef.deposit(from: <- token2Vault)
+
+      destroy from
+
+      // Create initial tokens
+      return <- FlowSwapPair.mintTokens(amount: 1.0)
+    }
+
+    pub fun updateFeePercentage(feePercentage: UFix64) {
+      FlowSwapPair.feePercentage = feePercentage
+    }
+  }
+
   pub fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
-    destroy from
+    self.token1VaultRef.deposit(from: <- (from as! @FungibleToken.Vault))
+
     return <- (TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault)
   }
 
   pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
-    destroy from
+    self.token2VaultRef.deposit(from: <- (from as! @FungibleToken.Vault))
+
     return <- (FlowToken.createEmptyVault() as! @FlowToken.Vault)
   }
 
   pub fun addLiquidity(from: @FlowSwapPair.TokenBundle): @FlowSwapPair.Vault {
+    pre {
+      self.totalSupply > UFix64(0): "Pair must be initialized by admin first"
+    }
+
+    let token1Vault <- from.withdrawToken1()
+    let token2Vault <- from.withdrawToken2()
+
+    assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
+    assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+
+    FlowSwapPair.token1VaultRef.deposit(from: <- token1Vault)
+    FlowSwapPair.token2VaultRef.deposit(from: <- token2Vault)
+
     destroy from
     return <- (FlowSwapPair.createEmptyVault() as! @FlowSwapPair.Vault)
   }
@@ -170,9 +246,49 @@ pub contract FlowSwapPair: FungibleToken {
 
   init() {
     self.totalSupply = 0.0
-    self.TokenStoragePath = /storage/teleportedTetherTokenVault
-    self.TokenPublicBalancePath = /public/teleportedTetherTokenBalance
-    self.TokenPublicReceiverPath = /public/teleportedTetherTokenReceiver
+    self.feePercentage = 0.005
+    // self.TokenStoragePath = /storage/teleportedTetherTokenVault
+    // self.TokenPublicBalancePath = /public/teleportedTetherTokenBalance
+    // self.TokenPublicReceiverPath = /public/teleportedTetherTokenReceiver
+
+    let token1Vault <- FlowToken.createEmptyVault() as! @FlowToken.Vault
+    self.account.save(<-token1Vault, to: /storage/flowTokenVault)
+
+    // Expose public receiver reference
+    self.account.link<&FlowToken.Vault{FungibleToken.Receiver}>(
+      /public/flowTokenReceiver,
+      target: /storage/flowTokenVault
+    )
+
+    // Expose public balance reference
+    self.account.link<&FlowToken.Vault{FungibleToken.Balance}>(
+      /public/flowTokenBalance,
+      target: /storage/flowTokenVault
+    )
+
+    self.token1VaultRef = self.account.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
+      ?? panic("Could not borrow capability to FlowToken vault")
+
+    let token2Vault <- TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault
+    self.account.save(<-token2Vault, to: /storage/teleportedTetherTokenVault)
+
+    // Expose public receiver reference
+    self.account.link<&TeleportedTetherToken.Vault{FungibleToken.Receiver}>(
+      /public/teleportedTetherTokenReceiver,
+      target: /storage/teleportedTetherTokenVault
+    )
+
+    // Expose public balance reference
+    self.account.link<&TeleportedTetherToken.Vault{FungibleToken.Balance}>(
+      /public/teleportedTetherTokenBalance,
+      target: /storage/teleportedTetherTokenVault
+    )
+
+    self.token2VaultRef = self.account.borrow<&TeleportedTetherToken.Vault>(from: /storage/teleportedTetherTokenVault)
+      ?? panic("Could not borrow capability to TeleportedTetherToken vault")
+
+    let admin <- create Admin()
+    self.account.save(<-admin, to: /storage/flowSwapPairAdmin)
 
     // Emit an event that shows that the contract was initialized
     emit TokensInitialized(initialSupply: self.totalSupply)
