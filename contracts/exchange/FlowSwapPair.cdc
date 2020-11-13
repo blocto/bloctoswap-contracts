@@ -240,7 +240,7 @@ pub contract FlowSwapPair: FungibleToken {
   }
 
   // Get quote for Token1 (given) -> Token2
-  pub fun quoteSwapToken1ForToken2(amount: UFix64): UFix64 {
+  pub fun quoteSwapExactToken1ForToken2(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + amount) * (token2Amount - quote)
@@ -250,7 +250,7 @@ pub contract FlowSwapPair: FungibleToken {
   }
 
   // Get quote for Token1 -> Token2 (given)
-  pub fun quoteSwapToken2FromToken1(amount: UFix64): UFix64 {
+  pub fun quoteSwapToken1ForExactToken2(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     assert(poolAmounts.token2Amount > amount, message: "Not enough Token2 in the pool")
@@ -262,7 +262,7 @@ pub contract FlowSwapPair: FungibleToken {
   }
 
   // Get quote for Token2 (given) -> Token1
-  pub fun quoteSwapToken2ForToken1(amount: UFix64): UFix64 {
+  pub fun quoteSwapExactToken2ForToken1(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
@@ -272,7 +272,7 @@ pub contract FlowSwapPair: FungibleToken {
   }
 
   // Get quote for Token2 -> Token1 (given)
-  pub fun quoteSwapToken1FromToken2(amount: UFix64): UFix64 {
+  pub fun quoteSwapToken2ForExactToken1(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     assert(poolAmounts.token1Amount > amount, message: "Not enough Token1 in the pool")
@@ -291,7 +291,7 @@ pub contract FlowSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token2Amount = self.quoteSwapToken1ForToken2(amount: from.balance) * (1.0 - self.feePercentage)
+    let token2Amount = self.quoteSwapExactToken1ForToken2(amount: from.balance) * (1.0 - self.feePercentage)
 
     assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
 
@@ -308,7 +308,7 @@ pub contract FlowSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token1Amount = self.quoteSwapToken2ForToken1(amount: from.balance) * (1.0 - self.feePercentage)
+    let token1Amount = self.quoteSwapExactToken2ForToken1(amount: from.balance) * (1.0 - self.feePercentage)
 
     assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
 

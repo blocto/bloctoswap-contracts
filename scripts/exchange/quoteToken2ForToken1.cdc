@@ -4,8 +4,8 @@ import FlowSwapPair from 0x04
 
 // This script reads the Vault balances of two accounts.
 pub fun main() {
-  let token2Amount = 10.0
-  let token1Quote = FlowSwapPair.quoteSwapToken2ForToken1(amount: token2Amount)
+  let token2Amount = 14.214
+  let token1Quote = FlowSwapPair.quoteSwapExactToken2ForToken1(amount: token2Amount)
 
   // Use optional chaining to read and log balance fields
   log("Pay Token2:")
