@@ -106,9 +106,9 @@ pub contract TeleportedTetherToken: FungibleToken {
     //
     // Function that creates and returns a new teleport admin resource
     //
-    pub fun createNewTeleportAdmin(feeCollector: &TeleportedTetherToken.Vault{FungibleToken.Receiver}): @TeleportAdmin {
+    pub fun createNewTeleportAdmin(): @TeleportAdmin {
       emit TeleportAdminCreated()
-      return <- create TeleportAdmin(feeCollector: feeCollector, inwardFee: 0.01, outwardFee: 1.0)
+      return <- create TeleportAdmin(inwardFee: 0.01, outwardFee: 1.0)
     }
   }
 
@@ -121,6 +121,8 @@ pub contract TeleportedTetherToken: FungibleToken {
   }
 
   pub resource interface TeleportConfig {
+    pub fun withdrawFee(amount: UFix64): @FungibleToken.Vault
+    
     pub fun updateInwardFee(fee: UFix64)
 
     pub fun updateOutwardFee(fee: UFix64)
@@ -133,7 +135,7 @@ pub contract TeleportedTetherToken: FungibleToken {
   //
   pub resource TeleportAdmin: TeleportIn, TeleportOut, TeleportConfig {
     // receiver reference to collect teleport fee
-    pub var feeCollector: &TeleportedTetherToken.Vault{FungibleToken.Receiver}
+    pub let feeCollector: @TeleportedTetherToken.Vault
 
     // fee collected when token is teleported from Ethereum to Flow
     pub var inwardFee: UFix64
@@ -172,6 +174,7 @@ pub contract TeleportedTetherToken: FungibleToken {
       pre {
         to.length == 20: "Ethereum address should be 20 bytes"
       }
+
       let vault <- from as! @TeleportedTetherToken.Vault
       let fee <- vault.withdraw(amount: self.outwardFee)
       self.feeCollector.deposit(from: <-fee)
@@ -181,8 +184,8 @@ pub contract TeleportedTetherToken: FungibleToken {
       emit TokensTeleportedOut(amount: amount, to: to)
     }
 
-    pub fun updateFeeCollector(feeCollector: &TeleportedTetherToken.Vault{FungibleToken.Receiver}) {
-      self.feeCollector = feeCollector
+    pub fun withdrawFee(amount: UFix64): @FungibleToken.Vault {
+      return <- self.feeCollector.withdraw(amount: amount)
     }
 
     pub fun updateInwardFee(fee: UFix64) {
@@ -193,10 +196,14 @@ pub contract TeleportedTetherToken: FungibleToken {
       self.outwardFee = fee
     }
 
-    init(feeCollector: &TeleportedTetherToken.Vault{FungibleToken.Receiver}, inwardFee: UFix64, outwardFee: UFix64) {
-      self.feeCollector = feeCollector
+    init(inwardFee: UFix64, outwardFee: UFix64) {
+      self.feeCollector <- TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault
       self.inwardFee = inwardFee
       self.outwardFee = outwardFee
+    }
+
+    destroy() {
+      destroy self.feeCollector
     }
   }
 

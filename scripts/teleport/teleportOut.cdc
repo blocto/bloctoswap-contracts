@@ -1,21 +1,17 @@
-// This transaction is a template for a transaction
-// to add a Vault resource to their account
-// so that they can use the teleportedTetherToken (USDT)
+import FungibleToken from 0x9a0766d93b6608b7
+import TeleportedTetherToken from 0xf4772588268a160f
 
-import FungibleToken from 0x01
-import TeleportedTetherToken from 0x02
-
-transaction {
+transaction(amount: UFix64, target: String) {
   prepare(signer: AuthAccount) {
-    let teleportOutRef = getAccount(0x03).getCapability(/public/teleportedTetherTokenTeleportOut)!
+    let teleportOutRef = getAccount(0xf086a545ce3c552d).getCapability(/public/teleportedTetherTokenTeleportOut)!
         .borrow<&TeleportedTetherToken.TeleportAdmin{TeleportedTetherToken.TeleportOut}>()
         ?? panic("Could not borrow a reference to TeleportOut")
 
     let vaultRef = signer.borrow<&TeleportedTetherToken.Vault>(from: /storage/teleportedTetherTokenVault)
         ?? panic("Could not borrow a reference to the vault resource")
 
-    let vault <- vaultRef.withdraw(amount: 9.9);
+    let vault <- vaultRef.withdraw(amount: amount);
     
-    teleportOutRef.teleportOut(from: <- vault, to: "19818f44Faf5A217F619AFF0FD487CB2a55cCa65ff".decodeHex())
+    teleportOutRef.teleportOut(from: <- vault, to: target.decodeHex())
   }
 }
