@@ -13,10 +13,10 @@ pub contract FlowSwapPair: FungibleToken {
   pub var feePercentage: UFix64
 
   // Controls FlowToken vault
-  access(contract) let token1VaultRef: &FlowToken.Vault
+  access(contract) let token1Vault: @FlowToken.Vault
 
   // Controls TeleportedTetherToken vault
-  access(contract) let token2VaultRef: &TeleportedTetherToken.Vault
+  access(contract) let token2Vault: @TeleportedTetherToken.Vault
 
   // // Defines token vault storage path
   // pub let TokenStoragePath: Path
@@ -146,7 +146,7 @@ pub contract FlowSwapPair: FungibleToken {
     }
   }
 
-  // createEmptyTokenBundle
+  // createEmptyBundle
   //
   pub fun createEmptyTokenBundle(): @FlowSwapPair.TokenBundle {
     return <- create TokenBundle(
@@ -201,8 +201,8 @@ pub contract FlowSwapPair: FungibleToken {
       assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
       assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
 
-      FlowSwapPair.token1VaultRef.deposit(from: <- token1Vault)
-      FlowSwapPair.token2VaultRef.deposit(from: <- token2Vault)
+      FlowSwapPair.token1Vault.deposit(from: <- token1Vault)
+      FlowSwapPair.token2Vault.deposit(from: <- token2Vault)
 
       destroy from
 
@@ -210,21 +210,98 @@ pub contract FlowSwapPair: FungibleToken {
       return <- FlowSwapPair.mintTokens(amount: 1.0)
     }
 
+    // For development. Remove after stable
+    pub fun removeLiquidity(amountToken1: UFix64, amountToken2: UFix64): @FlowSwapPair.TokenBundle {
+      let token1Vault <- FlowSwapPair.token1Vault.withdraw(amount: amountToken1) as! @FlowToken.Vault
+      let token2Vault <- FlowSwapPair.token2Vault.withdraw(amount: amountToken2) as! @TeleportedTetherToken.Vault
+
+      let tokenBundle <- FlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
+      return <- tokenBundle
+    }
+
     pub fun updateFeePercentage(feePercentage: UFix64) {
       FlowSwapPair.feePercentage = feePercentage
     }
   }
 
-  pub fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
-    self.token1VaultRef.deposit(from: <- (from as! @FungibleToken.Vault))
+  pub struct PoolAmounts {
+    pub let token1Amount: UFix64
+    pub let token2Amount: UFix64
 
-    return <- (TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault)
+    init(token1Amount: UFix64, token2Amount: UFix64) {
+      self.token1Amount = token1Amount
+      self.token2Amount = token2Amount
+    }
   }
 
-  pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
-    self.token2VaultRef.deposit(from: <- (from as! @FungibleToken.Vault))
+  // Check current pool amounts
+  pub fun getPoolAmounts(): PoolAmounts {
+    return PoolAmounts(token1Amount: FlowSwapPair.token1Vault.balance, token2Amount: FlowSwapPair.token2Vault.balance)
+  }
 
-    return <- (FlowToken.createEmptyVault() as! @FlowToken.Vault)
+  // Get quote for Token1 -> Token2
+  pub fun quoteSwapToken1ForToken2(amount: UFix64): UFix64 {
+    let poolAmounts = self.getPoolAmounts()
+
+    // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + amount) * (token2Amount - quote)
+    let quote = poolAmounts.token2Amount - ((poolAmounts.token1Amount * poolAmounts.token2Amount) / (poolAmounts.token1Amount + amount))
+
+    return quote
+  }
+
+  // Get quote for Token2 -> Token1
+  pub fun quoteSwapToken2ForToken1(amount: UFix64): UFix64 {
+    let poolAmounts = self.getPoolAmounts()
+
+    // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
+    let quote = poolAmounts.token1Amount - ((poolAmounts.token1Amount * poolAmounts.token2Amount) / (poolAmounts.token2Amount + amount))
+
+    return quote
+  }
+
+  // Swaps Token1 -> Token2
+  pub fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
+    pre {
+      from.balance > UFix64(0): "Empty token vault"
+    }
+
+    // Calculate amount from pricing curve
+    // A fee portion is taken from the final amount
+    let token2Amount = self.quoteSwapToken1ForToken2(amount: from.balance) * (1.0 - self.feePercentage)
+
+    assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
+
+    self.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+
+    return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
+  }
+
+  // Swap Token2 -> Token1
+  pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
+    pre {
+      from.balance > UFix64(0): "Empty token vault"
+    }
+
+    // Calculate amount from pricing curve
+    // A fee portion is taken from the final amount
+    let token1Amount = self.quoteSwapToken2ForToken1(amount: from.balance) * (1.0 - self.feePercentage)
+
+    assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
+
+    self.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+
+    return <- (self.token1Vault.withdraw(amount: token1Amount) as! @FlowToken.Vault)
+  }
+
+  // Used to add liquidity without minting new liquidity token
+  pub fun donateLiquidity(from: @FlowSwapPair.TokenBundle) {
+    let token1Vault <- from.withdrawToken1()
+    let token2Vault <- from.withdrawToken2()
+
+    FlowSwapPair.token1Vault.deposit(from: <- token1Vault)
+    FlowSwapPair.token2Vault.deposit(from: <- token2Vault)
+
+    destroy from
   }
 
   pub fun addLiquidity(from: @FlowSwapPair.TokenBundle): @FlowSwapPair.Vault {
@@ -238,16 +315,42 @@ pub contract FlowSwapPair: FungibleToken {
     assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
     assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
 
-    FlowSwapPair.token1VaultRef.deposit(from: <- token1Vault)
-    FlowSwapPair.token2VaultRef.deposit(from: <- token2Vault)
+    let token1Percentage: UFix64 = token1Vault.balance / FlowSwapPair.token1Vault.balance;
+    let token2Percentage: UFix64 = token2Vault.balance / FlowSwapPair.token2Vault.balance;
+
+    // final liquidity token minted is the smaller between token1Liquidity and token2Liquidity
+    // to maximize profit, user should add liquidity propotional to current liquidity
+    let liquidityPercentage = token1Percentage < token2Percentage ? token1Percentage : token2Percentage;
+
+    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
+
+    FlowSwapPair.token1Vault.deposit(from: <- token1Vault)
+    FlowSwapPair.token2Vault.deposit(from: <- token2Vault)
+
+    let liquidityTokenVault <- FlowSwapPair.mintTokens(amount: FlowSwapPair.totalSupply * liquidityPercentage)
 
     destroy from
-    return <- (FlowSwapPair.createEmptyVault() as! @FlowSwapPair.Vault)
+    return <- liquidityTokenVault
   }
 
   pub fun removeLiquidity(from: @FlowSwapPair.Vault): @FlowSwapPair.TokenBundle {
-    destroy from
-    return <- FlowSwapPair.createEmptyTokenBundle()
+    pre {
+      from.balance > UFix64(0): "Empty liquidity token vault"
+      from.balance < FlowSwapPair.totalSupply: "Cannot remove all liquidity"
+    }
+
+    let liquidityPercentage = from.balance / FlowSwapPair.totalSupply;
+
+    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
+
+    // Burn liquidity tokens and withdraw
+    FlowSwapPair.burnTokens(from: <- from)
+
+    let token1Vault <- FlowSwapPair.token1Vault.withdraw(amount: FlowSwapPair.token1Vault.balance * liquidityPercentage) as! @FlowToken.Vault
+    let token2Vault <- FlowSwapPair.token2Vault.withdraw(amount: FlowSwapPair.token2Vault.balance * liquidityPercentage) as! @TeleportedTetherToken.Vault
+
+    let tokenBundle <- FlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
+    return <- tokenBundle
   }
 
   init() {
@@ -257,41 +360,11 @@ pub contract FlowSwapPair: FungibleToken {
     // self.TokenPublicBalancePath = /public/teleportedTetherTokenBalance
     // self.TokenPublicReceiverPath = /public/teleportedTetherTokenReceiver
 
-    let token1Vault <- FlowToken.createEmptyVault() as! @FlowToken.Vault
-    self.account.save(<-token1Vault, to: /storage/flowTokenVault)
+    // Setup internal FlowToken vault
+    self.token1Vault <- FlowToken.createEmptyVault() as! @FlowToken.Vault
 
-    // Expose public receiver reference
-    self.account.link<&FlowToken.Vault{FungibleToken.Receiver}>(
-      /public/flowTokenReceiver,
-      target: /storage/flowTokenVault
-    )
-
-    // Expose public balance reference
-    self.account.link<&FlowToken.Vault{FungibleToken.Balance}>(
-      /public/flowTokenBalance,
-      target: /storage/flowTokenVault
-    )
-
-    self.token1VaultRef = self.account.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
-      ?? panic("Could not borrow capability to FlowToken vault")
-
-    let token2Vault <- TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault
-    self.account.save(<-token2Vault, to: /storage/teleportedTetherTokenVault)
-
-    // Expose public receiver reference
-    self.account.link<&TeleportedTetherToken.Vault{FungibleToken.Receiver}>(
-      /public/teleportedTetherTokenReceiver,
-      target: /storage/teleportedTetherTokenVault
-    )
-
-    // Expose public balance reference
-    self.account.link<&TeleportedTetherToken.Vault{FungibleToken.Balance}>(
-      /public/teleportedTetherTokenBalance,
-      target: /storage/teleportedTetherTokenVault
-    )
-
-    self.token2VaultRef = self.account.borrow<&TeleportedTetherToken.Vault>(from: /storage/teleportedTetherTokenVault)
-      ?? panic("Could not borrow capability to TeleportedTetherToken vault")
+    // Setup internal TeleportedTetherToken vault
+    self.token2Vault <- TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault
 
     let admin <- create Admin()
     self.account.save(<-admin, to: /storage/flowSwapPairAdmin)

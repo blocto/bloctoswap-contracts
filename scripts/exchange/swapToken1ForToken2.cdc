@@ -16,15 +16,9 @@ transaction {
 
     let tetherVault = signer.borrow<&TeleportedTetherToken.Vault>(from: /storage/teleportedTetherTokenVault)
         ?? panic("Could not borrow a reference to Vault")
-    
-    let token2Vault <- tetherVault.withdraw(amount: 10.0) as! @TeleportedTetherToken.Vault
 
-    let tokenBundle <- FlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault);
-    let liquidityTokenVault <- FlowSwapPair.addLiquidity(from: <- tokenBundle)
+    let token2Vault <- FlowSwapPair.swapToken1ForToken2(from: <-token1Vault)
 
-    let liquidityTokenRef = signer.borrow<&FlowSwapPair.Vault{FungibleToken.Receiver}>(from: /storage/flowSwapPairTokenVault)
-        ?? panic("Could not borrow a reference to Vault")
-
-    liquidityTokenRef.deposit(from: <- liquidityTokenVault)
+    tetherVault.deposit(from: <- token2Vault)
   }
 }
