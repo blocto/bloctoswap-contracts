@@ -42,6 +42,9 @@ pub contract FlowSwapPair: FungibleToken {
   // Event that is emitted when tokens are destroyed
   pub event TokensBurned(amount: UFix64)
 
+  // Event that is emitted when trading fee is updated
+  pub event FeeUpdated(feePercentage: UFix64)
+
   // Vault
   //
   // Each user stores an instance of only the Vault in their storage
@@ -221,6 +224,8 @@ pub contract FlowSwapPair: FungibleToken {
 
     pub fun updateFeePercentage(feePercentage: UFix64) {
       FlowSwapPair.feePercentage = feePercentage
+
+      emit FeeUpdated(feePercentage: feePercentage)
     }
   }
 
