@@ -12,20 +12,23 @@ pub contract FlowSwapPair: FungibleToken {
   // Fee charged when performing token swap
   pub var feePercentage: UFix64
 
+  // Used for precise calculations
+  pub var shifter: UFix64
+
   // Controls FlowToken vault
   access(contract) let token1Vault: @FlowToken.Vault
 
   // Controls TeleportedTetherToken vault
   access(contract) let token2Vault: @TeleportedTetherToken.Vault
 
-  // // Defines token vault storage path
-  // pub let TokenStoragePath: Path
+  // Defines token vault storage path
+  pub let TokenStoragePath: Path
 
-  // // Defines token vault public balance path
-  // pub let TokenPublicBalancePath: Path
+  // Defines token vault public balance path
+  pub let TokenPublicBalancePath: Path
 
-  // // Defines token vault public receiver path
-  // pub let TokenPublicReceiverPath: Path
+  // Defines token vault public receiver path
+  pub let TokenPublicReceiverPath: Path
 
   // Event that is emitted when the contract is created
   pub event TokensInitialized(initialSupply: UFix64)
@@ -249,7 +252,7 @@ pub contract FlowSwapPair: FungibleToken {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + amount) * (token2Amount - quote)
-    let quote = poolAmounts.token2Amount - ((poolAmounts.token1Amount * poolAmounts.token2Amount) / (poolAmounts.token1Amount + amount))
+    let quote = (poolAmounts.token2Amount * amount / ((poolAmounts.token1Amount + amount) / self.shifter)) / self.shift
 
     return quote
   }
@@ -261,7 +264,7 @@ pub contract FlowSwapPair: FungibleToken {
     assert(poolAmounts.token2Amount > amount, message: "Not enough Token2 in the pool")
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + quote) * (token2Amount - amount)
-    let quote = ((poolAmounts.token1Amount * poolAmounts.token2Amount) / (poolAmounts.token2Amount - amount)) - poolAmounts.token1Amount
+    let quote = ((poolAmounts.token1Amount * amount) / ((poolAmounts.token2Amount - amount) / self.shifter)) / self.shifter
 
     return quote
   }
@@ -271,7 +274,7 @@ pub contract FlowSwapPair: FungibleToken {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
-    let quote = poolAmounts.token1Amount - ((poolAmounts.token1Amount * poolAmounts.token2Amount) / (poolAmounts.token2Amount + amount))
+    let quote = (poolAmounts.token1Amount * amount / ((poolAmounts.token2Amount + amount) / self.shifter)) / self.shift
 
     return quote
   }
@@ -283,7 +286,7 @@ pub contract FlowSwapPair: FungibleToken {
     assert(poolAmounts.token1Amount > amount, message: "Not enough Token1 in the pool")
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + quote) * (token1Amount - amount)
-    let quote = ((poolAmounts.token1Amount * poolAmounts.token2Amount) / (poolAmounts.token1Amount - amount)) - poolAmounts.token2Amount
+    let quote = ((poolAmounts.token2Amount * amount) / ((poolAmounts.token1Amount - amount) / self.shifter)) / self.shifter
 
     return quote
   }
@@ -385,9 +388,10 @@ pub contract FlowSwapPair: FungibleToken {
   init() {
     self.totalSupply = 0.0
     self.feePercentage = 0.003 // 0.3%
-    // self.TokenStoragePath = /storage/teleportedTetherTokenVault
-    // self.TokenPublicBalancePath = /public/teleportedTetherTokenBalance
-    // self.TokenPublicReceiverPath = /public/teleportedTetherTokenReceiver
+    self.shifter = 10000.0
+    self.TokenStoragePath = /storage/teleportedTetherTokenVault
+    self.TokenPublicBalancePath = /public/teleportedTetherTokenBalance
+    self.TokenPublicReceiverPath = /public/teleportedTetherTokenReceiver
 
     // Setup internal FlowToken vault
     self.token1Vault <- FlowToken.createEmptyVault() as! @FlowToken.Vault
