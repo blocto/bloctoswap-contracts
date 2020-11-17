@@ -296,7 +296,7 @@ pub contract FlowSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token2Amount = self.quoteSwapExactToken1ForToken2(amount: from.balance) * (1.0 - self.feePercentage)
+    let token2Amount = self.quoteSwapExactToken1ForToken2(amount: from.balance * (1.0 - self.feePercentage))
 
     assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
 
@@ -313,7 +313,7 @@ pub contract FlowSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token1Amount = self.quoteSwapExactToken2ForToken1(amount: from.balance) * (1.0 - self.feePercentage)
+    let token1Amount = self.quoteSwapExactToken2ForToken1(amount: from.balance * (1.0 - self.feePercentage))
 
     assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
 
@@ -384,7 +384,7 @@ pub contract FlowSwapPair: FungibleToken {
 
   init() {
     self.totalSupply = 0.0
-    self.feePercentage = 0.005
+    self.feePercentage = 0.003 // 0.3%
     // self.TokenStoragePath = /storage/teleportedTetherTokenVault
     // self.TokenPublicBalancePath = /public/teleportedTetherTokenBalance
     // self.TokenPublicReceiverPath = /public/teleportedTetherTokenReceiver

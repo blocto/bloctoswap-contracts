@@ -5,7 +5,7 @@
 import FungibleToken from 0x9a0766d93b6608b7
 import FlowToken from 0x7e60df042a9c0868
 import TeleportedTetherToken from 0xf4772588268a160f
-import FlowSwapPair from 0x10109c55377016d0
+import FlowSwapPair from 0xa728bdfdb987fd99
 
 transaction(token1Amount: UFix64, token2Amount: UFix64) {
   prepare(signer: AuthAccount) {
