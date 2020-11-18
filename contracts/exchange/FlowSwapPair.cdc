@@ -252,7 +252,7 @@ pub contract FlowSwapPair: FungibleToken {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + amount) * (token2Amount - quote)
-    let quote = (poolAmounts.token2Amount * amount / ((poolAmounts.token1Amount + amount) / self.shifter)) / self.shift
+    let quote = (poolAmounts.token2Amount * amount / ((poolAmounts.token1Amount + amount) / self.shifter)) / self.shifter
 
     return quote
   }
@@ -274,7 +274,7 @@ pub contract FlowSwapPair: FungibleToken {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
-    let quote = (poolAmounts.token1Amount * amount / ((poolAmounts.token2Amount + amount) / self.shifter)) / self.shift
+    let quote = (poolAmounts.token1Amount * amount / ((poolAmounts.token2Amount + amount) / self.shifter)) / self.shifter
 
     return quote
   }
@@ -347,8 +347,8 @@ pub contract FlowSwapPair: FungibleToken {
     assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
     assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
 
-    let token1Percentage: UFix64 = token1Vault.balance / FlowSwapPair.token1Vault.balance;
-    let token2Percentage: UFix64 = token2Vault.balance / FlowSwapPair.token2Vault.balance;
+    let token1Percentage: UFix64 = token1Vault.balance / (FlowSwapPair.token1Vault.balance / self.shifter)
+    let token2Percentage: UFix64 = token2Vault.balance / (FlowSwapPair.token2Vault.balance / self.shifter)
 
     // final liquidity token minted is the smaller between token1Liquidity and token2Liquidity
     // to maximize profit, user should add liquidity propotional to current liquidity
@@ -359,7 +359,7 @@ pub contract FlowSwapPair: FungibleToken {
     FlowSwapPair.token1Vault.deposit(from: <- token1Vault)
     FlowSwapPair.token2Vault.deposit(from: <- token2Vault)
 
-    let liquidityTokenVault <- FlowSwapPair.mintTokens(amount: FlowSwapPair.totalSupply * liquidityPercentage)
+    let liquidityTokenVault <- FlowSwapPair.mintTokens(amount: (FlowSwapPair.totalSupply / self.shifter) * liquidityPercentage)
 
     destroy from
     return <- liquidityTokenVault
@@ -371,15 +371,15 @@ pub contract FlowSwapPair: FungibleToken {
       from.balance < FlowSwapPair.totalSupply: "Cannot remove all liquidity"
     }
 
-    let liquidityPercentage = from.balance / FlowSwapPair.totalSupply;
+    let liquidityPercentage = from.balance / (FlowSwapPair.totalSupply / self.shifter)
 
     assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
 
     // Burn liquidity tokens and withdraw
     FlowSwapPair.burnTokens(from: <- from)
 
-    let token1Vault <- FlowSwapPair.token1Vault.withdraw(amount: FlowSwapPair.token1Vault.balance * liquidityPercentage) as! @FlowToken.Vault
-    let token2Vault <- FlowSwapPair.token2Vault.withdraw(amount: FlowSwapPair.token2Vault.balance * liquidityPercentage) as! @TeleportedTetherToken.Vault
+    let token1Vault <- FlowSwapPair.token1Vault.withdraw(amount: (FlowSwapPair.token1Vault.balance / self.shifter) * liquidityPercentage) as! @FlowToken.Vault
+    let token2Vault <- FlowSwapPair.token2Vault.withdraw(amount: (FlowSwapPair.token2Vault.balance / self.shifter) * liquidityPercentage) as! @TeleportedTetherToken.Vault
 
     let tokenBundle <- FlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
     return <- tokenBundle
@@ -389,9 +389,10 @@ pub contract FlowSwapPair: FungibleToken {
     self.totalSupply = 0.0
     self.feePercentage = 0.003 // 0.3%
     self.shifter = 10000.0
-    self.TokenStoragePath = /storage/teleportedTetherTokenVault
-    self.TokenPublicBalancePath = /public/teleportedTetherTokenBalance
-    self.TokenPublicReceiverPath = /public/teleportedTetherTokenReceiver
+
+    self.TokenStoragePath = /storage/flowUsdtFspLpVault
+    self.TokenPublicBalancePath = /public/flowUsdtFspLpBalance
+    self.TokenPublicReceiverPath = /public/flowUsdtFspLpReceiver
 
     // Setup internal FlowToken vault
     self.token1Vault <- FlowToken.createEmptyVault() as! @FlowToken.Vault
