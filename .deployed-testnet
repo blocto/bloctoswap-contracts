@@ -1,6 +1,8 @@
+# On Ethereum
 TeleportCustody: 0xc5D97DD749B461B3712194c0861878671697aFeb
 TetherToken: 0xc791ACb2E760Ac89f7E4b7699c355A2Ba4D4AFF0
 
+# On Flow
 FungibleToken: 0x9a0766d93b6608b7
 FlowToken: 0x7e60df042a9c0868
 BloctoServiceAccount: 0xf086a545ce3c552d
