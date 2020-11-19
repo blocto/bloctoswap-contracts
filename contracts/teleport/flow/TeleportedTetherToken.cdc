@@ -112,20 +112,29 @@ pub contract TeleportedTetherToken: FungibleToken {
     }
   }
 
-  pub resource interface TeleportIn {
-    pub fun teleportIn(amount: UFix64, from: [UInt8]): @TeleportedTetherToken.Vault
-  }
+  pub resource interface TeleportUser {
+    // fee collected when token is teleported from Ethereum to Flow
+    pub var inwardFee: UFix64
 
-  pub resource interface TeleportOut {
+    // fee collected when token is teleported from Flow to Ethereum
+    pub var outwardFee: UFix64
+
+    // corresponding controller account on Ethereum
+    pub var ethereumAdminAccount: [UInt8]
+
     pub fun teleportOut(from: @FungibleToken.Vault, to: [UInt8])
   }
 
-  pub resource interface TeleportConfig {
+  pub resource interface TeleportControl {
+    pub fun teleportIn(amount: UFix64, from: [UInt8]): @TeleportedTetherToken.Vault
+
     pub fun withdrawFee(amount: UFix64): @FungibleToken.Vault
     
     pub fun updateInwardFee(fee: UFix64)
 
     pub fun updateOutwardFee(fee: UFix64)
+
+    pub fun updateEthereumAdminAccount(account: [UInt8])
   }
 
   // TeleportAdmin resource
@@ -133,7 +142,7 @@ pub contract TeleportedTetherToken: FungibleToken {
   //  Resource object that has the capability to mint teleported tokens
   //  upon receiving teleport request from Ethereum side
   //
-  pub resource TeleportAdmin: TeleportIn, TeleportOut, TeleportConfig {
+  pub resource TeleportAdmin: TeleportUser, TeleportControl {
     // receiver reference to collect teleport fee
     pub let feeCollector: @TeleportedTetherToken.Vault
 
@@ -142,6 +151,9 @@ pub contract TeleportedTetherToken: FungibleToken {
 
     // fee collected when token is teleported from Flow to Ethereum
     pub var outwardFee: UFix64
+
+    // corresponding controller account on Ethereum
+    pub var ethereumAdminAccount: [UInt8]
 
     // teleportIn
     //
@@ -196,10 +208,19 @@ pub contract TeleportedTetherToken: FungibleToken {
       self.outwardFee = fee
     }
 
+    pub fun updateEthereumAdminAccount(account: [UInt8]) {
+      pre {
+        account.length == 20: "Ethereum address should be 20 bytes"
+      }
+
+      self.ethereumAdminAccount = account
+    }
+
     init(inwardFee: UFix64, outwardFee: UFix64) {
       self.feeCollector <- TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault
       self.inwardFee = inwardFee
       self.outwardFee = outwardFee
+      self.ethereumAdminAccount = []
     }
 
     destroy() {
