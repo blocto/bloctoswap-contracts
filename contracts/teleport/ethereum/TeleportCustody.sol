@@ -9,6 +9,9 @@ import "./TetherToken.sol";
 contract TeleportCustody is TeleportAdmin {
   TetherToken private _tokenContract = TetherToken(0xdAC17F958D2ee523a2206206994597C13D831ec7);
 
+  // Records that an unlock transaction has been executed
+  mapping(bytes32 => bool) private _unlocked;
+  
   // Emmitted when user locks token and initiates teleport
   event Locked(uint256 amount, bytes8 indexed flowAddress, address indexed ethereumAddress);
 
@@ -30,9 +33,12 @@ contract TeleportCustody is TeleportAdmin {
   /**
     * @dev Admin unlocks token upon receiving teleport request from Flow.
     */
-  function unlock(uint256 amount, address ethereumAddress, bytes8 flowAddress) public onlyAdmin {
+  function unlock(uint256 amount, address ethereumAddress, bytes8 flowAddress, bytes32 flowHash) public onlyAdmin {
     require(ethereumAddress != address(0), "TeleportCustody: ethereumAddress is the zero address");
+    require(!_unlocked[flowHash], "TeleportCustody: same unlock hash has been executed");
+
     _tokenContract.transfer(ethereumAddress, amount);
+    _unlocked[flowHash] = true;
     emit Unlocked(amount, flowAddress, ethereumAddress);
   }
 

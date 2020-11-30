@@ -5,6 +5,9 @@ pub contract TeleportedTetherToken: FungibleToken {
   // Total supply of TeleportedTetherTokens in existence
   pub var totalSupply: UFix64
 
+  // Record teleported Ethereum hashes
+  pub var teleported: {String: Bool}
+
   // Defines token vault storage path
   pub let TokenStoragePath: Path
 
@@ -24,7 +27,7 @@ pub contract TeleportedTetherToken: FungibleToken {
   pub event TokensDeposited(amount: UFix64, to: Address?)
 
   // Event that is emitted when new tokens are teleported in from Ethereum (from: Ethereum Address, 20 bytes)
-  pub event TokensTeleportedIn(amount: UFix64, from: [UInt8])
+  pub event TokensTeleportedIn(amount: UFix64, from: [UInt8], hash: String)
 
   // Event that is emitted when tokens are destroyed and teleported to Ethereum (to: Ethereum Address, 20 bytes)
   pub event TokensTeleportedOut(amount: UFix64, to: [UInt8])
@@ -129,7 +132,7 @@ pub contract TeleportedTetherToken: FungibleToken {
   }
 
   pub resource interface TeleportControl {
-    pub fun teleportIn(amount: UFix64, from: [UInt8]): @TeleportedTetherToken.Vault
+    pub fun teleportIn(amount: UFix64, from: [UInt8], hash: String): @TeleportedTetherToken.Vault
 
     pub fun withdrawFee(amount: UFix64): @FungibleToken.Vault
     
@@ -163,13 +166,16 @@ pub contract TeleportedTetherToken: FungibleToken {
     // Function that mints new tokens, adds them to the total supply,
     // and returns them to the calling context.
     //
-    pub fun teleportIn(amount: UFix64, from: [UInt8]): @TeleportedTetherToken.Vault {
+    pub fun teleportIn(amount: UFix64, from: [UInt8], hash: String): @TeleportedTetherToken.Vault {
       pre {
         amount > self.inwardFee: "Amount minted must be greater than inward teleport fee"
         from.length == 20: "Ethereum address should be 20 bytes"
+        hash.length == 64: "Ethereum tx hash should be 32 bytes"
+        !(TeleportedTetherToken.teleported[hash] ?? false): "Same hash already teleported"
       }
       TeleportedTetherToken.totalSupply = TeleportedTetherToken.totalSupply + amount
-      emit TokensTeleportedIn(amount: amount, from: from)
+      TeleportedTetherToken.teleported[hash] = true
+      emit TokensTeleportedIn(amount: amount, from: from, hash: hash)
 
       let vault <- create Vault(balance: amount)
       let fee <- vault.withdraw(amount: self.inwardFee)
@@ -237,6 +243,7 @@ pub contract TeleportedTetherToken: FungibleToken {
 
   init() {
     self.totalSupply = 0.0
+    self.teleported = {}
     self.TokenStoragePath = /storage/teleportedTetherTokenVault
     self.TokenPublicBalancePath = /public/teleportedTetherTokenBalance
     self.TokenPublicReceiverPath = /public/teleportedTetherTokenReceiver
