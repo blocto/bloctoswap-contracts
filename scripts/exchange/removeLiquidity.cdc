@@ -9,7 +9,7 @@ import FlowSwapPair from 0x04
 
 transaction {
   prepare(signer: AuthAccount) {
-    let flowSwapPairVault = signer.borrow<&FlowSwapPair.Vault>(from: /storage/flowSwapPairTokenVault)
+    let flowSwapPairVault = signer.borrow<&FlowSwapPair.Vault>(from: /storage/flowUsdtFspLpVault)
         ?? panic("Could not borrow a reference to Vault")
     
     let liquidityTokenVault <- flowSwapPairVault.withdraw(amount: 1.0) as! @FlowSwapPair.Vault

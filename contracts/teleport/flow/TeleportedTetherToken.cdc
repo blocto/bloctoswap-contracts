@@ -29,6 +29,9 @@ pub contract TeleportedTetherToken: FungibleToken {
   // Event that is emitted when tokens are destroyed and teleported to Ethereum (to: Ethereum Address, 20 bytes)
   pub event TokensTeleportedOut(amount: UFix64, to: [UInt8])
 
+  // Event that is emitted when teleport fee is collected (type 0: out, 1: in)
+  pub event FeeCollected(amount: UFix64, type: UInt8)
+
   // Event that is emitted when a new burner resource is created
   pub event TeleportAdminCreated()
 
@@ -170,7 +173,9 @@ pub contract TeleportedTetherToken: FungibleToken {
 
       let vault <- create Vault(balance: amount)
       let fee <- vault.withdraw(amount: self.inwardFee)
+
       self.feeCollector.deposit(from: <-fee)
+      emit FeeCollected(amount: self.inwardFee, type: 1)
 
       return <- vault
     }
@@ -189,7 +194,9 @@ pub contract TeleportedTetherToken: FungibleToken {
 
       let vault <- from as! @TeleportedTetherToken.Vault
       let fee <- vault.withdraw(amount: self.outwardFee)
+
       self.feeCollector.deposit(from: <-fee)
+      emit FeeCollected(amount: self.outwardFee, type: 0)
 
       let amount = vault.balance
       destroy vault
