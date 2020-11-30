@@ -16,7 +16,7 @@ contract TeleportCustody is TeleportAdmin {
   event Locked(uint256 amount, bytes8 indexed flowAddress, address indexed ethereumAddress);
 
   // Emmitted when teleport completes and token gets unlocked
-  event Unlocked(uint256 amount, bytes8 indexed flowAddress, address indexed ethereumAddress);
+  event Unlocked(uint256 amount, bytes8 indexed flowAddress, address indexed ethereumAddress, bytes32 indexed flowHash);
 
   // Emmitted when token contract is updated
   event TokenContractUpdated(address indexed tokenAddress);
@@ -39,7 +39,7 @@ contract TeleportCustody is TeleportAdmin {
 
     _tokenContract.transfer(ethereumAddress, amount);
     _unlocked[flowHash] = true;
-    emit Unlocked(amount, flowAddress, ethereumAddress);
+    emit Unlocked(amount, flowAddress, ethereumAddress, flowHash);
   }
 
   // Owner methods
