@@ -48,6 +48,11 @@ pub contract FlowSwapPair: FungibleToken {
   // Event that is emitted when trading fee is updated
   pub event FeeUpdated(feePercentage: UFix64)
 
+  // Event that is emitted when a swap happens
+  // Side 1: from token1 to token2
+  // Side 2: from token2 to token1
+  pub event Trade(token1Amount: UFix64, token2Amount: UFix64, side: UInt8)
+
   // Vault
   //
   // Each user stores an instance of only the Vault in their storage
@@ -299,11 +304,13 @@ pub contract FlowSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token2Amount = self.quoteSwapExactToken1ForToken2(amount: from.balance * (1.0 - self.feePercentage))
+    let token1Amount = from.balance * (1.0 - self.feePercentage)
+    let token2Amount = self.quoteSwapExactToken1ForToken2(amount: token1Amount)
 
     assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
 
     self.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+    emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
 
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
   }
@@ -316,11 +323,13 @@ pub contract FlowSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token1Amount = self.quoteSwapExactToken2ForToken1(amount: from.balance * (1.0 - self.feePercentage))
+    let token2Amount = from.balance * (1.0 - self.feePercentage)
+    let token1Amount = self.quoteSwapExactToken2ForToken1(amount: token2Amount)
 
     assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
 
     self.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+    emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
 
     return <- (self.token1Vault.withdraw(amount: token1Amount) as! @FlowToken.Vault)
   }
