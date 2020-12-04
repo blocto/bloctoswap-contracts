@@ -36,7 +36,7 @@ pub contract TeleportedTetherToken: FungibleToken {
   pub event FeeCollected(amount: UFix64, type: UInt8)
 
   // Event that is emitted when a new burner resource is created
-  pub event TeleportAdminCreated()
+  pub event TeleportAdminCreated(allowedAmount: UFix64)
 
   // Vault
   //
@@ -112,9 +112,9 @@ pub contract TeleportedTetherToken: FungibleToken {
     //
     // Function that creates and returns a new teleport admin resource
     //
-    pub fun createNewTeleportAdmin(): @TeleportAdmin {
-      emit TeleportAdminCreated()
-      return <- create TeleportAdmin(inwardFee: 0.01, outwardFee: 1.0)
+    pub fun createNewTeleportAdmin(allowedAmount: UFix64): @TeleportAdmin {
+      emit TeleportAdminCreated(allowedAmount: allowedAmount)
+      return <- create TeleportAdmin(allowedAmount: allowedAmount)
     }
   }
 
@@ -132,6 +132,7 @@ pub contract TeleportedTetherToken: FungibleToken {
   }
 
   pub resource interface TeleportControl {
+
     pub fun teleportIn(amount: UFix64, from: [UInt8], hash: String): @TeleportedTetherToken.Vault
 
     pub fun withdrawFee(amount: UFix64): @FungibleToken.Vault
@@ -149,6 +150,10 @@ pub contract TeleportedTetherToken: FungibleToken {
   //  upon receiving teleport request from Ethereum side
   //
   pub resource TeleportAdmin: TeleportUser, TeleportControl {
+    
+    // the amount of tokens that the minter is allowed to mint
+    pub var allowedAmount: UFix64
+
     // receiver reference to collect teleport fee
     pub let feeCollector: @TeleportedTetherToken.Vault
 
@@ -168,12 +173,15 @@ pub contract TeleportedTetherToken: FungibleToken {
     //
     pub fun teleportIn(amount: UFix64, from: [UInt8], hash: String): @TeleportedTetherToken.Vault {
       pre {
+        amount <= self.allowedAmount: "Amount minted must be less than the allowed amount"
         amount > self.inwardFee: "Amount minted must be greater than inward teleport fee"
         from.length == 20: "Ethereum address should be 20 bytes"
         hash.length == 64: "Ethereum tx hash should be 32 bytes"
         !(TeleportedTetherToken.teleported[hash] ?? false): "Same hash already teleported"
       }
       TeleportedTetherToken.totalSupply = TeleportedTetherToken.totalSupply + amount
+      self.allowedAmount = self.allowedAmount - amount
+
       TeleportedTetherToken.teleported[hash] = true
       emit TokensTeleportedIn(amount: amount, from: from, hash: hash)
 
@@ -229,10 +237,13 @@ pub contract TeleportedTetherToken: FungibleToken {
       self.ethereumAdminAccount = account
     }
 
-    init(inwardFee: UFix64, outwardFee: UFix64) {
+    init(allowedAmount: UFix64) {
+      self.allowedAmount = allowedAmount
+
       self.feeCollector <- TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault
-      self.inwardFee = inwardFee
-      self.outwardFee = outwardFee
+      self.inwardFee = 0.01
+      self.outwardFee = 3.0
+
       self.ethereumAdminAccount = []
     }
 

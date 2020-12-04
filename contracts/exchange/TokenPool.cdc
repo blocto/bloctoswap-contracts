@@ -25,6 +25,11 @@ pub contract TokenPool {
   // Controls FlowToken vault
   access(contract) let token1Vault: @FlowToken.Vault
 
+  // Event that is emitted when a swap happens
+  // Side 1: from token1 to token2
+  // Side 2: from token2 to token1
+  pub event Trade(token1Amount: UFix64, token2Amount: UFix64, side: UInt8)
+
   pub resource Admin {
     pub fun addLiquidity(from: @FlowSwapPair.TokenBundle) {
       let token1Vault <- from.withdrawToken1()
