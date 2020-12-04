@@ -19,6 +19,9 @@ pub contract TokenPool {
   // Price to buy back FLOW
   pub var buyBackPrice: UFix64
 
+  // Used for precise calculations
+  pub var shifter: UFix64
+
   // Controls FlowToken vault
   access(contract) let token1Vault: @FlowToken.Vault
 
@@ -51,6 +54,21 @@ pub contract TokenPool {
     }
   }
 
+  pub struct PoolAmounts {
+    pub let token1Amount: UFix64
+    pub let token2Amount: UFix64
+
+    init(token1Amount: UFix64, token2Amount: UFix64) {
+      self.token1Amount = token1Amount
+      self.token2Amount = token2Amount
+    }
+  }
+
+  // Check current pool amounts
+  pub fun getPoolAmounts(): PoolAmounts {
+    return PoolAmounts(token1Amount: TokenPool.virtualToken1Amount, token2Amount: virtualToken2Amount)
+  }
+
   // Get quote for Token1 (given) -> Token2
   pub fun quoteSwapExactToken1ForToken2(amount: UFix64): UFix64 {
     return amount * self.buyBackPrice
@@ -63,18 +81,22 @@ pub contract TokenPool {
 
   // Get quote for Token2 (given) -> Token1
   pub fun quoteSwapExactToken2ForToken1(amount: UFix64): UFix64 {
+    let poolAmounts = self.getPoolAmounts()
+
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
-    let quote = self.virtualToken1Amount - ((self.virtualToken1Amount * self.virtualToken2Amount) / (self.virtualToken2Amount + amount))
+    let quote = (poolAmounts.token1Amount * amount / ((poolAmounts.token2Amount + amount) / self.shifter)) / self.shifter
 
     return quote
   }
 
   // Get quote for Token2 -> Token1 (given)
   pub fun quoteSwapToken2ForExactToken1(amount: UFix64): UFix64 {
-    assert(self.virtualToken1Amount > amount, message: "Not enough Token1 in the virtual pool")
+    let poolAmounts = self.getPoolAmounts()
+
+    assert(poolAmounts.token1Amount > amount, message: "Not enough Token1 in the pool")
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + quote) * (token1Amount - amount)
-    let quote = ((self.virtualToken1Amount * self.virtualToken2Amount) / (self.virtualToken1Amount - amount)) - self.virtualToken2Amount
+    let quote = ((poolAmounts.token2Amount * amount) / ((poolAmounts.token1Amount - amount) / self.shifter)) / self.shifter
 
     return quote
   }
@@ -87,11 +109,13 @@ pub contract TokenPool {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token2Amount = self.quoteSwapExactToken1ForToken2(amount: from.balance)
+    let token1Amount = from.balance
+    let token2Amount = self.quoteSwapExactToken1ForToken2(amount: token1Amount)
 
     assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
 
     self.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+    emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
 
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
   }
@@ -104,11 +128,13 @@ pub contract TokenPool {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token1Amount = self.quoteSwapExactToken2ForToken1(amount: from.balance)
+    let token2Amount = from.balance
+    let token1Amount = self.quoteSwapExactToken2ForToken1(amount: token2Amount)
 
     assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
 
     self.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+    emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
 
     return <- (self.token1Vault.withdraw(amount: token1Amount) as! @FlowToken.Vault)
   }
@@ -117,6 +143,7 @@ pub contract TokenPool {
     self.virtualToken1Amount = 100000.0
     self.virtualToken2Amount = 35000.0
     self.buyBackPrice = 0.01
+    self.shifter = 10000.0
 
     // Setup internal FlowToken vault
     self.token1Vault <- FlowToken.createEmptyVault() as! @FlowToken.Vault
