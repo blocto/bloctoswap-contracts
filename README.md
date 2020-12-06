@@ -1,2 +1,2 @@
-# FlowSwap Contracts
-Cadence and Solidity contracts used in FlowSwap
+# Blocto Swap Contracts
+Cadence and Solidity contracts used in Blocto Swap
