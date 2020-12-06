@@ -252,12 +252,20 @@ pub contract FlowSwapPair: FungibleToken {
     return PoolAmounts(token1Amount: FlowSwapPair.token1Vault.balance, token2Amount: FlowSwapPair.token2Vault.balance)
   }
 
+  // Precise division to mitigate fixed-point division error
+  pub fun preciseDiv(numerator: UFix64, denominator: UFix64) {
+    return
+      (numerator /
+        (denominator / self.shifter)
+      ) / self.shifter;
+  }
+
   // Get quote for Token1 (given) -> Token2
   pub fun quoteSwapExactToken1ForToken2(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + amount) * (token2Amount - quote)
-    let quote = (poolAmounts.token2Amount * amount / ((poolAmounts.token1Amount + amount) / self.shifter)) / self.shifter
+    let quote = self.preciseDiv(poolAmounts.token2Amount * amount, poolAmounts.token1Amount + amount);
 
     return quote
   }
@@ -269,7 +277,7 @@ pub contract FlowSwapPair: FungibleToken {
     assert(poolAmounts.token2Amount > amount, message: "Not enough Token2 in the pool")
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + quote) * (token2Amount - amount)
-    let quote = ((poolAmounts.token1Amount * amount) / ((poolAmounts.token2Amount - amount) / self.shifter)) / self.shifter
+    let quote = self.preciseDiv(poolAmounts.token1Amount * amount, poolAmounts.token2Amount - amount);
 
     return quote
   }
@@ -279,7 +287,7 @@ pub contract FlowSwapPair: FungibleToken {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
-    let quote = (poolAmounts.token1Amount * amount / ((poolAmounts.token2Amount + amount) / self.shifter)) / self.shifter
+    let quote = self.preciseDiv(poolAmounts.token1Amount * amount, poolAmounts.token2Amount + amount);
 
     return quote
   }
@@ -291,7 +299,7 @@ pub contract FlowSwapPair: FungibleToken {
     assert(poolAmounts.token1Amount > amount, message: "Not enough Token1 in the pool")
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + quote) * (token1Amount - amount)
-    let quote = ((poolAmounts.token2Amount * amount) / ((poolAmounts.token1Amount - amount) / self.shifter)) / self.shifter
+    let quote = self.preciseDiv(poolAmounts.token2Amount * amount, poolAmounts.token1Amount - amount);
 
     return quote
   }
