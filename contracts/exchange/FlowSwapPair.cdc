@@ -304,7 +304,7 @@ pub contract FlowSwapPair: FungibleToken {
     return quote
   }
 
-  // Swaps Token1 -> Token2
+  // Swaps Token1 (FLOW) -> Token2 (tUSDT)
   pub fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
     pre {
       from.balance > UFix64(0): "Empty token vault"
@@ -323,7 +323,7 @@ pub contract FlowSwapPair: FungibleToken {
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
   }
 
-  // Swap Token2 -> Token1
+  // Swap Token2 (tUSDT) -> Token1 (FLOW)
   pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
     pre {
       from.balance > UFix64(0): "Empty token vault"
