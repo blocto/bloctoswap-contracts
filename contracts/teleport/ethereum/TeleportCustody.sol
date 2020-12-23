@@ -33,30 +33,41 @@ contract TeleportCustody is TeleportAdmin {
   }
 
   /**
-    * @dev Admin unlocks token upon receiving teleport request from Flow.
+    * @dev Internal function for processing unlock requests.
+    */
+  function _unlock(uint256 amount, address ethereumAddress, bytes32 flowHash)
+    internal
+  {
+    require(ethereumAddress != address(0), "TeleportCustody: ethereumAddress is the zero address");
+    require(!_unlocked[flowHash], "TeleportCustody: same unlock hash has been executed");
+
+    _unlocked[flowHash] = true;
+    _tokenContract.transfer(ethereumAddress, amount);
+
+    emit Unlocked(amount, ethereumAddress, flowHash);
+  }
+
+  /**
+    * @dev TeleportAdmin unlocks token upon receiving teleport request from Flow.
     */
   function unlock(uint256 amount, address ethereumAddress, bytes32 flowHash)
     public
     consumeAuthorization(amount)
   {
-    require(ethereumAddress != address(0), "TeleportCustody: ethereumAddress is the zero address");
-    require(!_unlocked[flowHash], "TeleportCustody: same unlock hash has been executed");
-
-    _tokenContract.transfer(ethereumAddress, amount);
-    _unlocked[flowHash] = true;
-    emit Unlocked(amount, ethereumAddress, flowHash);
+    _unlock(amount, ethereumAddress, flowHash);
   }
 
   // Owner methods
 
   /**
-    * @dev Owner withdraws token from lockup contract.
+    * @dev Owner unlocks token upon receiving teleport request from Flow.
+    * There is no unlock limit for owner.
     */
-  function withdraw(uint256 amount)
+  function unlockByOwner(uint256 amount, address ethereumAddress, bytes32 flowHash)
     public
     onlyOwner
   {
-    _tokenContract.transfer(owner(), amount);
+    _unlock(amount, ethereumAddress, flowHash);
   }
 
   /**

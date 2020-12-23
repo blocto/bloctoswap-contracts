@@ -16,3 +16,4 @@ transaction(amount: UFix64, target: Address, from: String, hash: String) {
     receiverRef.deposit(from: <- vault)
   }
 }
+ 

@@ -46,7 +46,11 @@ contract TeleportAdmin is Ownable {
     * @dev Updates the admin status of an account.
     * Can only be called by the current owner.
     */
-  function updateAdmin(address account, uint256 allowedAmount) public virtual onlyOwner {
+  function updateAdmin(address account, uint256 allowedAmount)
+    public
+    virtual
+    onlyOwner
+  {
     emit AdminUpdated(account, allowedAmount);
     _allowedAmount[account] = allowedAmount;
   }
