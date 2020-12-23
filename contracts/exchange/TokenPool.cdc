@@ -140,11 +140,11 @@ pub contract TokenPool {
   pub fun quoteSwapToken2ForExactToken1(amount: UFix64): UFix64 {
     let poolAmounts = self.getVirtualPoolAmounts()
 
-    if poolAmounts.token1Amount <= amount || self.token1Vault.balance <= amount {
+    if poolAmounts.token1Amount <= amount || self.token1Vault.balance < amount {
       // Not enough Token1 in the pool
       return 184467440737.09551615
     }
-    
+
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + quote) * (token1Amount - amount)
     let quote = self.preciseDiv(numerator: poolAmounts.token2Amount * amount, denominator: poolAmounts.token1Amount - amount);
 
@@ -187,11 +187,15 @@ pub contract TokenPool {
     let fspPoolAmounts = FlowSwapPair.getPoolAmounts()
     let token1LiquidityAmount = self.preciseDiv(numerator: fspPoolAmounts.token1Amount * token2Amount, denominator: fspPoolAmounts.token2Amount)
 
-    let token1Vault <- self.token1Vault.withdraw(amount: token1LiquidityAmount) as! @FlowToken.Vault
-    let tokenBundle <- FlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- from)
-    let fspLpTokenVault <- FlowSwapPair.addLiquidity(from: <- tokenBundle)
+    if token1LiquidityAmount + token1Amount < self.token1Vault.balance {
+      let token1Vault <- self.token1Vault.withdraw(amount: token1LiquidityAmount) as! @FlowToken.Vault
+      let tokenBundle <- FlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- from)
+      let fspLpTokenVault <- FlowSwapPair.addLiquidity(from: <- tokenBundle)
 
-    self.fspLpTokenVault.deposit(from: <- (fspLpTokenVault as! @FungibleToken.Vault))
+      self.fspLpTokenVault.deposit(from: <- (fspLpTokenVault as! @FungibleToken.Vault))
+    } else {
+      self.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+    }
 
     // Update virtual pool
     self.virtualToken2Amount = self.virtualToken2Amount + token2Amount
