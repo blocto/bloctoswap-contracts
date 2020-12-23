@@ -47,11 +47,14 @@ contract TeleportCustody is TeleportAdmin {
     emit Unlocked(amount, ethereumAddress, flowHash);
   }
 
+  // Admin methods
+
   /**
     * @dev TeleportAdmin unlocks token upon receiving teleport request from Flow.
     */
   function unlock(uint256 amount, address ethereumAddress, bytes32 flowHash)
     public
+    notFrozen
     consumeAuthorization(amount)
   {
     _unlock(amount, ethereumAddress, flowHash);

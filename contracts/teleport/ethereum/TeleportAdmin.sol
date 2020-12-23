@@ -14,6 +14,9 @@ import "./Ownable.sol";
  * their use to the admins.
  */
 contract TeleportAdmin is Ownable {
+  // Marks that the contract is frozen or unfrozen (safety kill-switch)
+  bool private _isFrozen;
+
   mapping(address => uint256) private _allowedAmount;
 
   event AdminUpdated(address indexed account, uint256 allowedAmount);
@@ -21,8 +24,55 @@ contract TeleportAdmin is Ownable {
   /**
     * @dev Checks the authorized amount of an admin account.
     */
-  function allowedAmount(address account) public view returns (uint256) {
+  function allowedAmount(address account)
+    public
+    view
+    returns (uint256)
+  {
     return _allowedAmount[account];
+  }
+
+  /**
+    * @dev Returns if the contract is currently frozen.
+    */
+  function isFrozen()
+    public
+    view
+    returns (bool)
+  {
+    return _isFrozen;
+  }
+
+  /**
+    * @dev Throw if contract is currently frozen.
+    */
+  modifier notFrozen() {
+    require(
+      !_isFrozen,
+      "TeleportAdmin: contract is frozen by owner"
+    );
+
+    _;
+  }
+
+  /**
+    * @dev Owner freezes the contract.
+    */
+  function freeze()
+    public
+    onlyOwner
+  {
+    _isFrozen = true;
+  }
+
+  /**
+    * @dev Owner unfreezes the contract.
+    */
+  function unfreeze()
+    public
+    onlyOwner
+  {
+    _isFrozen = false;
   }
 
   /**
