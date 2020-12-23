@@ -273,6 +273,11 @@ pub contract FlowSwapPair: FungibleToken {
   pub fun quoteSwapToken1ForExactToken2(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
+    if poolAmounts.token2Amount <= amount {
+      // Not enough Token2 in the pool
+      return 184467440737.09551615
+    }
+
     assert(poolAmounts.token2Amount > amount, message: "Not enough Token2 in the pool")
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + quote) * (token2Amount - amount)
@@ -294,6 +299,11 @@ pub contract FlowSwapPair: FungibleToken {
   // Get quote for Token2 -> Token1 (given)
   pub fun quoteSwapToken2ForExactToken1(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
+
+    if poolAmounts.token1Amount <= amount {
+      // Not enough Token1 in the pool
+      return 184467440737.09551615
+    }
 
     assert(poolAmounts.token1Amount > amount, message: "Not enough Token1 in the pool")
 

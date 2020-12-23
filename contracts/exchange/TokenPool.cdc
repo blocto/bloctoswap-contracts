@@ -1,6 +1,6 @@
 import FungibleToken from 0xFUNGIBLETOKENADDRESS
 import FlowToken from 0xFLOWTOKENADDRESS
-import TeleportedTetherToken from 0xTELEPORTEDTETHERTOKENADDRESS
+import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
 import FlowSwapPair from 0xFLOWSWAPPAIRADDRESS
 
 // Perpetual pool between FlowToken and TeleportedTetherToken
@@ -38,8 +38,17 @@ pub contract TokenPool {
       let token1Vault <- from.withdrawToken1()
       let token2Vault <- from.withdrawToken2()
 
-      TokenPool.token1Vault.deposit(from: <- token1Vault)
-      TokenPool.token2Vault.deposit(from: <- token2Vault)
+      if token1Vault.balance > 0.0 {
+        TokenPool.token1Vault.deposit(from: <- token1Vault)
+      } else {
+        destroy token1Vault
+      }
+
+      if token2Vault.balance > 0.0 {
+        TokenPool.token2Vault.deposit(from: <- token2Vault)
+      } else {
+        destroy token2Vault
+      }
 
       destroy from
     }
@@ -52,8 +61,9 @@ pub contract TokenPool {
       return <- tokenBundle
     }
 
-    pub fun removeFspLpTokens(amount: UFix64): @FlowSwapPair.Vault {
-      return <- TokenPool.fspLpTokenVault.withdraw(amount: amount) as! @FlowSwapPair.Vault
+    pub fun withdrawFspLpTokens(amount: UFix64): @FlowSwapPair.Vault {
+      let tokenVault <- TokenPool.fspLpTokenVault.withdraw(amount: amount) as! @FlowSwapPair.Vault
+      return <- tokenVault
     }
 
     pub fun updateVirtualAmounts(amountToken1: UFix64, amountToken2: UFix64) {
@@ -97,9 +107,7 @@ pub contract TokenPool {
 
   // Precise division to mitigate fixed-point division error
   pub fun preciseDiv(numerator: UFix64, denominator: UFix64): UFix64 {
-    return (numerator /
-        (denominator / self.shifter)
-      ) / self.shifter;
+    return (numerator / (denominator / self.shifter)) / self.shifter;
   }
 
   // Get quote for Token1 (given) -> Token2
@@ -125,18 +133,18 @@ pub contract TokenPool {
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
     let quote = self.preciseDiv(numerator: poolAmounts.token1Amount * amount, denominator: poolAmounts.token2Amount + amount);
 
-    assert(self.token1Vault.balance > quote, message: "Not enough Token1 in the pool")
-
-    return quote
+    return self.token1Vault.balance > quote ? quote : self.token1Vault.balance
   }
 
   // Get quote for Token2 -> Token1 (given)
   pub fun quoteSwapToken2ForExactToken1(amount: UFix64): UFix64 {
     let poolAmounts = self.getVirtualPoolAmounts()
 
-    assert(poolAmounts.token1Amount > amount, message: "Not enough Token1 (virtual) in the pool")
-    assert(self.token1Vault.balance > amount, message: "Not enough Token1 in the pool")
-
+    if poolAmounts.token1Amount <= amount || self.token1Vault.balance <= amount {
+      // Not enough Token1 in the pool
+      return 184467440737.09551615
+    }
+    
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + quote) * (token1Amount - amount)
     let quote = self.preciseDiv(numerator: poolAmounts.token2Amount * amount, denominator: poolAmounts.token1Amount - amount);
 
