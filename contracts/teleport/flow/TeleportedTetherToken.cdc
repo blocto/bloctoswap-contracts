@@ -132,6 +132,8 @@ pub contract TeleportedTetherToken: FungibleToken {
   }
 
   pub resource interface TeleportControl {
+    // the amount of tokens that the minter is allowed to mint
+    pub var allowedAmount: UFix64
 
     pub fun teleportIn(amount: UFix64, from: [UInt8], hash: String): @TeleportedTetherToken.Vault
 
@@ -235,6 +237,10 @@ pub contract TeleportedTetherToken: FungibleToken {
       }
 
       self.ethereumAdminAccount = account
+    }
+
+    pub fun getFeeAmount(): UFix64 {
+      return self.feeCollector.balance
     }
 
     init(allowedAmount: UFix64) {
