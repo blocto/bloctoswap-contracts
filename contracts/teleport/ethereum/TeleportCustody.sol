@@ -18,9 +18,6 @@ contract TeleportCustody is TeleportAdmin {
   // Emmitted when teleport completes and token gets unlocked
   event Unlocked(uint256 amount, address indexed ethereumAddress, bytes32 indexed flowHash);
 
-  // Emmitted when token contract is updated
-  event TokenContractUpdated(address indexed tokenAddress);
-
   /**
     * @dev User locks token and initiates teleport request.
     */
@@ -71,15 +68,5 @@ contract TeleportCustody is TeleportAdmin {
     onlyOwner
   {
     _unlock(amount, ethereumAddress, flowHash);
-  }
-
-  /**
-    * @dev Owner updates the target lockup token address.
-    */
-  function updateTokenAddress(address tokenAddress)
-    public
-    onlyOwner
-  {
-    _tokenContract = TetherToken(tokenAddress);
   }
 }

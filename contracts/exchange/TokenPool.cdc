@@ -19,6 +19,9 @@ pub contract TokenPool {
   // Used for precise calculations
   pub var shifter: UFix64
 
+  // Constant for maximum of UFix64
+  pub let UFIX64_MAX: UFix64
+
   // Controls FlowToken vault
   access(contract) let token1Vault: @FlowToken.Vault
 
@@ -141,8 +144,8 @@ pub contract TokenPool {
     let poolAmounts = self.getVirtualPoolAmounts()
 
     if poolAmounts.token1Amount <= amount || self.token1Vault.balance < amount {
-      // Not enough Token1 in the pool
-      return 184467440737.09551615
+      // Not enough Token1 in the pool, return UFix64 MAX
+      return self.UFIX64_MAX
     }
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + quote) * (token1Amount - amount)
@@ -211,6 +214,7 @@ pub contract TokenPool {
     self.virtualToken2Amount = 38000.0
     self.buyBackPrice = 0.001
     self.shifter = 10000.0
+    self.UFIX64_MAX = 184467440737.09551615
 
     // Setup internal FlowToken vault
     self.token1Vault <- FlowToken.createEmptyVault() as! @FlowToken.Vault
