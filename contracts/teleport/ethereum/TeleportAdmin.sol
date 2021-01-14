@@ -104,4 +104,16 @@ contract TeleportAdmin is Ownable {
     emit AdminUpdated(account, allowedAmount);
     _allowedAmount[account] = allowedAmount;
   }
+
+  /**
+    * @dev Overrides the inherited method from Ownable.
+    * Disable ownership resounce.
+    */
+  function renounceOwnership()
+    public
+    override
+    onlyOwner
+  {
+    revert("TeleportAdmin: ownership cannot be renounced");
+  }
 }

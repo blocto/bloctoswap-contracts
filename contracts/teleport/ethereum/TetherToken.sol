@@ -7,6 +7,6 @@ pragma solidity 0.6.12;
  * ERC-20 contract and have different method signatures.
  */
 interface TetherToken {
-  function transfer(address _to, uint _value) public {}
-  function transferFrom(address _from, address _to, uint _value) public {}
+  function transfer(address _to, uint _value) external;
+  function transferFrom(address _from, address _to, uint _value) external;
 }

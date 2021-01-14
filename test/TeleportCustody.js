@@ -91,6 +91,22 @@ contract('TeleportCustody (USDT) Tests', (accounts) => {
         )
       })
     })
+
+    describe('renounceOwnership()', () => {
+      it('should be rejected', async () => {
+        await tryCatch(
+          teleportCustody.renounceOwnership({ from: owner }),
+          'TeleportAdmin: ownership cannot be renounced'
+        )
+      })
+
+      it('can only be called by owner', async () => {
+        await tryCatch(
+          teleportCustody.renounceOwnership({ from: adminOne }),
+          'Ownable: caller is not the owner'
+        )
+      })
+    })
   })
 
   describe('TeleportCustody', () => {
