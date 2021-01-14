@@ -180,6 +180,20 @@ contract('TeleportCustody (USDT) Tests', (accounts) => {
         );
       })
 
+      it('should block when target address is 0', async () => {
+        await teleportCustody.updateAdmin(adminOne, 500, { from: owner });
+
+        await tryCatch(
+          teleportCustody.unlock(
+            100,
+            '0x0000000000000000000000000000000000000000',
+            '0x0000',
+            { from: adminOne }
+          ),
+          'TeleportCustody: ethereumAddress is the zero address'
+        );
+      })
+
       it('should block when admin has depleted authorization', async () => {
         await teleportCustody.updateAdmin(adminOne, 500, { from: owner });
         await teleportCustody.unlock(500, user, '0x0000', { from: adminOne });
