@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.6.0;
+pragma solidity 0.6.12;
 
 /**
  * @dev Method signature contract for Tether (USDT) because it's not a standard
