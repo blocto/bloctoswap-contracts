@@ -69,6 +69,7 @@ contract TeleportCustody is TeleportAdmin {
     */
   function unlockByOwner(uint256 amount, address ethereumAddress, bytes32 flowHash)
     public
+    notFrozen
     onlyOwner
   {
     _unlock(amount, ethereumAddress, flowHash);

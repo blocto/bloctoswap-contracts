@@ -235,6 +235,33 @@ contract('TeleportCustody (USDT) Tests', (accounts) => {
         );
       })
 
+      it('should block when teleport service is frozen', async () => {
+        await teleportCustody.freeze({ from: owner }),
+
+        await tryCatch(
+          teleportCustody.unlockByOwner(100, user, '0x0000', { from: owner }),
+          'TeleportAdmin: contract is frozen by owner'
+        );
+      })
+
+      it('should unlock when teleport service is unfrozen', async () => {
+        await teleportCustody.freeze({ from: owner }),
+
+        await tryCatch(
+          teleportCustody.unlockByOwner(100, user, '0x0000', { from: owner }),
+          'TeleportAdmin: contract is frozen by owner'
+        );
+
+        await teleportCustody.unfreeze({ from: owner });
+
+        const { receipt: { rawLogs }, logs } = await teleportCustody.unlockByOwner(100, user, '0x0000', { from: owner });
+
+        const transferEvents = rawLogs.filter(event => event.address === TetherTokenTest.address);
+
+        assert.equal(transferEvents.length, 1);
+        assert.equal(logs[0].event, 'Unlocked');
+      })
+
       it('can only be called by the owner', async () => {
         await tryCatch(
           teleportCustody.unlockByOwner(100, user, '0x0000', { from: adminOne }),
