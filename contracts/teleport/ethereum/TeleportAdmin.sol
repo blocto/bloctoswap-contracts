@@ -21,6 +21,38 @@ contract TeleportAdmin is Ownable {
 
   event AdminUpdated(address indexed account, uint256 allowedAmount);
 
+  // Modifiers
+
+  /**
+    * @dev Throw if contract is currently frozen.
+    */
+  modifier notFrozen() {
+    require(
+      !_isFrozen,
+      "TeleportAdmin: contract is frozen by owner"
+    );
+
+    _;
+  }
+
+  /**
+    * @dev Throw if caller does not have sufficient authorized amount.
+    */
+  modifier consumeAuthorization(uint256 amount) {
+    address sender = _msgSender();
+    require(
+      allowedAmount(sender) >= amount,
+      "TeleportAdmin: caller does not have sufficient authorization"
+    );
+
+    _;
+
+    // reduce authorization amount. Underflow cannot occur because we have
+    // already checked that admin has sufficient allowed amount.
+    _allowedAmount[sender] -= amount;
+    emit AdminUpdated(sender, _allowedAmount[sender]);
+  }
+
   /**
     * @dev Checks the authorized amount of an admin account.
     */
@@ -44,18 +76,6 @@ contract TeleportAdmin is Ownable {
   }
 
   /**
-    * @dev Throw if contract is currently frozen.
-    */
-  modifier notFrozen() {
-    require(
-      !_isFrozen,
-      "TeleportAdmin: contract is frozen by owner"
-    );
-
-    _;
-  }
-
-  /**
     * @dev Owner freezes the contract.
     */
   function freeze()
@@ -73,23 +93,6 @@ contract TeleportAdmin is Ownable {
     onlyOwner
   {
     _isFrozen = false;
-  }
-
-  /**
-    * @dev Throw if caller does not have sufficient authorized amount.
-    */
-  modifier consumeAuthorization(uint256 amount) {
-    address sender = _msgSender();
-    require(
-      allowedAmount(sender) >= amount,
-      "TeleportAdmin: caller does not have sufficient authorization"
-    );
-
-    _;
-
-    // reduce authorization amount
-    _allowedAmount[sender] -= amount;
-    emit AdminUpdated(sender, _allowedAmount[sender]);
   }
 
   /**

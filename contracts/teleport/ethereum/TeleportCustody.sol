@@ -53,27 +53,6 @@ contract TeleportCustody is TeleportAdmin {
     emit Locked(amount, flowAddress, sender);
   }
 
-  /**
-    * @dev Internal function for processing unlock requests.
-    * 
-    * There is no way TeleportCustody can check the validity of the target address
-    * beforehand so user and admin should always make sure the provided information
-    * is correct.
-    */
-  function _unlock(uint256 amount, address ethereumAddress, bytes32 flowHash)
-    internal
-  {
-    require(ethereumAddress != address(0), "TeleportCustody: ethereumAddress is the zero address");
-    require(!_unlocked[flowHash], "TeleportCustody: same unlock hash has been executed");
-
-    _unlocked[flowHash] = true;
-
-    // NOTE: Return value should be checked. However, Tether does not have return value.
-    _tokenContract.transfer(ethereumAddress, amount);
-
-    emit Unlocked(amount, ethereumAddress, flowHash);
-  }
-
   // Admin methods
 
   /**
@@ -99,5 +78,28 @@ contract TeleportCustody is TeleportAdmin {
     onlyOwner
   {
     _unlock(amount, ethereumAddress, flowHash);
+  }
+
+  // Internal methods
+
+  /**
+    * @dev Internal function for processing unlock requests.
+    * 
+    * There is no way TeleportCustody can check the validity of the target address
+    * beforehand so user and admin should always make sure the provided information
+    * is correct.
+    */
+  function _unlock(uint256 amount, address ethereumAddress, bytes32 flowHash)
+    internal
+  {
+    require(ethereumAddress != address(0), "TeleportCustody: ethereumAddress is the zero address");
+    require(!_unlocked[flowHash], "TeleportCustody: same unlock hash has been executed");
+
+    _unlocked[flowHash] = true;
+
+    // NOTE: Return value should be checked. However, Tether does not have return value.
+    _tokenContract.transfer(ethereumAddress, amount);
+
+    emit Unlocked(amount, ethereumAddress, flowHash);
   }
 }
