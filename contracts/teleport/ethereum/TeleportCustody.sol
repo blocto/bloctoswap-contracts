@@ -6,6 +6,22 @@ pragma solidity 0.6.12;
 import "./TeleportAdmin.sol";
 import "./TetherToken.sol";
 
+/**
+ * @dev Implementation of the TeleportCustody contract.
+ *
+ * There are two priviledged roles for the contract: "owner" and "admin".
+ *
+ * Owner: Has the ultimate control of the contract and the funds stored inside the
+ *        contract. Including:
+ *     1) "freeze" and "unfreeze" the contract: when the TeleportCustody is frozen,
+ *        all deposits and withdrawals with the TeleportCustody is disabled. This 
+ *        should only happen when a major security risk is spotted or if admin access
+ *        is comprimised.
+ *     2) assign "admins": owner has the authority to grant "unlock" permission to
+ *        "admins" and set proper "unlock limit" for each "admin".
+ *
+ * Admin: Has the authority to "unlock" specific amount to tokens to receivers.
+ */
 contract TeleportCustody is TeleportAdmin {
   // USDC
   // ERC20 internal _tokenContract = ERC20(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
@@ -27,6 +43,7 @@ contract TeleportCustody is TeleportAdmin {
     */
   function lock(uint256 amount, bytes8 flowAddress)
     public
+    notFrozen
   {
     address sender = _msgSender();
     _tokenContract.transferFrom(sender, address(this), amount);

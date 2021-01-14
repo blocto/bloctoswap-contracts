@@ -119,6 +119,15 @@ contract('TeleportCustody (USDT) Tests', (accounts) => {
         assert.equal(transferEvents.length, 1);
         assert.equal(logs[0].event, 'Locked');
       })
+
+      it('should block when teleport service is frozen', async () => {
+        await teleportCustody.freeze({ from: owner }),
+
+        await tryCatch(
+          teleportCustody.lock(100, '0x0000', { from: user }),
+          'TeleportAdmin: contract is frozen by owner'
+        );
+      })
     })
 
     describe('unlock()', () => {
