@@ -1,6 +1,8 @@
 import FungibleToken from 0xFUNGIBLETOKENADDRESS
 
 pub contract TeleportedTetherToken: FungibleToken {
+  // Frozen flag controlled by Admin
+  pub var isFrozen: Bool
 
   // Total supply of TeleportedTetherTokens in existence
   pub var totalSupply: UFix64
@@ -106,6 +108,15 @@ pub contract TeleportedTetherToken: FungibleToken {
     return <- create Vault(balance: 0.0)
   }
 
+  pub resource Allowance {
+    pub var balance: UFix64
+
+    // initialize the balance at resource creation time
+    init(balance: UFix64) {
+      self.balance = balance
+    }
+  }
+
   pub resource Administrator {
 
     // createNewTeleportAdmin
@@ -115,6 +126,18 @@ pub contract TeleportedTetherToken: FungibleToken {
     pub fun createNewTeleportAdmin(allowedAmount: UFix64): @TeleportAdmin {
       emit TeleportAdminCreated(allowedAmount: allowedAmount)
       return <- create TeleportAdmin(allowedAmount: allowedAmount)
+    }
+
+    pub fun freeze() {
+      TeleportedTetherToken.isFrozen = true
+    }
+
+    pub fun unfreeze() {
+      TeleportedTetherToken.isFrozen = false
+    }
+
+    pub fun createAllowance(allowedAmount: UFix64): @Allowance {
+      return <- create Allowance(allowedAmount: allowedAmount)
     }
   }
 
@@ -129,6 +152,8 @@ pub contract TeleportedTetherToken: FungibleToken {
     pub var ethereumAdminAccount: [UInt8]
 
     pub fun teleportOut(from: @FungibleToken.Vault, to: [UInt8])
+
+    pub fun depositAllowance(from: @Allowance)
   }
 
   pub resource interface TeleportControl {
@@ -175,6 +200,7 @@ pub contract TeleportedTetherToken: FungibleToken {
     //
     pub fun teleportIn(amount: UFix64, from: [UInt8], hash: String): @TeleportedTetherToken.Vault {
       pre {
+        !TeleportedTetherToken.isFrozen: "Teleport service is frozen"
         amount <= self.allowedAmount: "Amount minted must be less than the allowed amount"
         amount > self.inwardFee: "Amount minted must be greater than inward teleport fee"
         from.length == 20: "Ethereum address should be 20 bytes"
@@ -205,6 +231,7 @@ pub contract TeleportedTetherToken: FungibleToken {
     //
     pub fun teleportOut(from: @FungibleToken.Vault, to: [UInt8]) {
       pre {
+        !TeleportedTetherToken.isFrozen: "Teleport service is frozen"
         to.length == 20: "Ethereum address should be 20 bytes"
       }
 
@@ -243,6 +270,12 @@ pub contract TeleportedTetherToken: FungibleToken {
       return self.feeCollector.balance
     }
 
+    pub fun depositAllowance(from: @Allowance) {
+      self.allowedAmount = self.allowedAmount + from.balance
+
+      destroy from
+    }
+
     init(allowedAmount: UFix64) {
       self.allowedAmount = allowedAmount
 
@@ -259,6 +292,7 @@ pub contract TeleportedTetherToken: FungibleToken {
   }
 
   init() {
+    self.isFrozen = false
     self.totalSupply = 0.0
     self.teleported = {}
     self.TokenStoragePath = /storage/teleportedTetherTokenVault
