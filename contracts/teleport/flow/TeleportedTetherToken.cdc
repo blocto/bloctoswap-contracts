@@ -137,7 +137,7 @@ pub contract TeleportedTetherToken: FungibleToken {
     }
 
     pub fun createAllowance(allowedAmount: UFix64): @Allowance {
-      return <- create Allowance(allowedAmount: allowedAmount)
+      return <- create Allowance(balance: allowedAmount)
     }
   }
 
@@ -147,6 +147,9 @@ pub contract TeleportedTetherToken: FungibleToken {
 
     // fee collected when token is teleported from Flow to Ethereum
     pub var outwardFee: UFix64
+    
+    // the amount of tokens that the minter is allowed to mint
+    pub var allowedAmount: UFix64
 
     // corresponding controller account on Ethereum
     pub var ethereumAdminAccount: [UInt8]
@@ -157,9 +160,6 @@ pub contract TeleportedTetherToken: FungibleToken {
   }
 
   pub resource interface TeleportControl {
-    // the amount of tokens that the minter is allowed to mint
-    pub var allowedAmount: UFix64
-
     pub fun teleportIn(amount: UFix64, from: [UInt8], hash: String): @TeleportedTetherToken.Vault
 
     pub fun withdrawFee(amount: UFix64): @FungibleToken.Vault
