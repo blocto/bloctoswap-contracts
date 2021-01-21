@@ -6,6 +6,9 @@ import TeleportedTetherToken from 0xTELEPORTEDTETHERTOKENADDRESS
 // Token1: FlowToken
 // Token2: TeleportedTetherToken
 pub contract FlowSwapPair: FungibleToken {
+  // Frozen flag controlled by Admin
+  pub var isFrozen: Bool
+  
   // Total supply of FlowSwapExchange liquidity token in existence
   pub var totalSupply: UFix64
 
@@ -201,6 +204,14 @@ pub contract FlowSwapPair: FungibleToken {
   }
 
   pub resource Admin {
+    pub fun freeze() {
+      FlowSwapPair.isFrozen = true
+    }
+
+    pub fun unfreeze() {
+      FlowSwapPair.isFrozen = false
+    }
+
     pub fun addInitialLiquidity(from: @FlowSwapPair.TokenBundle): @FlowSwapPair.Vault {
       pre {
         FlowSwapPair.totalSupply == UFix64(0): "Pair already initialized"
@@ -316,6 +327,7 @@ pub contract FlowSwapPair: FungibleToken {
   // Swaps Token1 (FLOW) -> Token2 (tUSDT)
   pub fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
     pre {
+      !FlowSwapPair.isFrozen: "FlowSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
     }
 
@@ -335,6 +347,7 @@ pub contract FlowSwapPair: FungibleToken {
   // Swap Token2 (tUSDT) -> Token1 (FLOW)
   pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
     pre {
+      !FlowSwapPair.isFrozen: "FlowSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
     }
 
@@ -412,6 +425,7 @@ pub contract FlowSwapPair: FungibleToken {
   }
 
   init() {
+    self.isFrozen = true // frozen until admin unfreezes
     self.totalSupply = 0.0
     self.feePercentage = 0.003 // 0.3%
     self.shifter = 10000.0

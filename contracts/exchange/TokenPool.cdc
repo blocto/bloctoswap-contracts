@@ -7,6 +7,9 @@ import FlowSwapPair from 0xFLOWSWAPPAIRADDRESS
 // Token1: FlowToken
 // Token2: TeleportedTetherToken
 pub contract TokenPool {
+  // Frozen flag controlled by Admin
+  pub var isFrozen: Bool
+
   // Virtual FlowToken amount for price calculation
   pub var virtualToken1Amount: UFix64
 
@@ -37,6 +40,14 @@ pub contract TokenPool {
   pub event Trade(token1Amount: UFix64, token2Amount: UFix64, side: UInt8)
 
   pub resource Admin {
+    pub fun freeze() {
+      TokenPool.isFrozen = true
+    }
+
+    pub fun unfreeze() {
+      TokenPool.isFrozen = false
+    }
+
     pub fun addLiquidity(from: @FlowSwapPair.TokenBundle) {
       let token1Vault <- from.withdrawToken1()
       let token2Vault <- from.withdrawToken2()
@@ -157,6 +168,7 @@ pub contract TokenPool {
   // Swaps Token1 (FLOW) -> Token2 (tUSDT)
   pub fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
     pre {
+      !TokenPool.isFrozen: "TokenPool is frozen"
       from.balance > UFix64(0): "Empty token vault"
     }
 
@@ -176,6 +188,7 @@ pub contract TokenPool {
   // Swap Token2 (tUSDT) -> Token1 (FLOW)
   pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
     pre {
+      !TokenPool.isFrozen: "TokenPool is frozen"
       from.balance > UFix64(0): "Empty token vault"
     }
 
@@ -210,6 +223,7 @@ pub contract TokenPool {
   }
 
   init() {
+    self.isFrozen = true // frozen until admin unfreezes
     self.virtualToken1Amount = 100000.0
     self.virtualToken2Amount = 38000.0
     self.buyBackPrice = 0.001
