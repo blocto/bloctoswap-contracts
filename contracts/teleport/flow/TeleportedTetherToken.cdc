@@ -11,13 +11,13 @@ pub contract TeleportedTetherToken: FungibleToken {
   pub var teleported: {String: Bool}
 
   // Defines token vault storage path
-  pub let TokenStoragePath: Path
+  pub let TokenStoragePath: StoragePath
 
   // Defines token vault public balance path
-  pub let TokenPublicBalancePath: Path
+  pub let TokenPublicBalancePath: PublicPath
 
   // Defines token vault public receiver path
-  pub let TokenPublicReceiverPath: Path
+  pub let TokenPublicReceiverPath: PublicPath
 
   // Event that is emitted when the contract is created
   pub event TokensInitialized(initialSupply: UFix64)
