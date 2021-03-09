@@ -1,6 +1,6 @@
 import FungibleToken from 0xFUNGIBLETOKENADDRESS
 import FlowToken from 0xFLOWTOKENADDRESS
-import TeleportedTetherToken from 0xTELEPORTEDTETHERTOKENADDRESS
+import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
 
 // Exchange pair between FlowToken and TeleportedTetherToken
 // Token1: FlowToken
