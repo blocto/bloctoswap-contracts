@@ -39,11 +39,11 @@ pub contract FusdUsdtSwapPair {
 
   pub resource LiquidityAdmin {
     pub fun depositToken1(from: @FUSD.Vault) {
-      FusdUsdtSwapPair.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+      FusdUsdtSwapPair.token1Vault.deposit(from: <- from)
     }
 
     pub fun depositToken2(from: @TeleportedTetherToken.Vault) {
-      FusdUsdtSwapPair.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+      FusdUsdtSwapPair.token2Vault.deposit(from: <- from)
     }
 
     pub fun withdrawToken1(amount: UFix64): @FUSD.Vault {
