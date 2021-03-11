@@ -15,9 +15,6 @@ pub contract FlowSwapPair: FungibleToken {
   // Fee charged when performing token swap
   pub var feePercentage: UFix64
 
-  // Used for precise calculations
-  pub var shifter: UFix64
-
   // Controls FlowToken vault
   access(contract) let token1Vault: @FlowToken.Vault
 
@@ -263,19 +260,12 @@ pub contract FlowSwapPair: FungibleToken {
     return PoolAmounts(token1Amount: FlowSwapPair.token1Vault.balance, token2Amount: FlowSwapPair.token2Vault.balance)
   }
 
-  // Precise division to mitigate fixed-point division error
-  pub fun preciseDiv(numerator: UFix64, denominator: UFix64): UFix64 {
-    return (numerator /
-        (denominator / self.shifter)
-      ) / self.shifter;
-  }
-
   // Get quote for Token1 (given) -> Token2
   pub fun quoteSwapExactToken1ForToken2(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + amount) * (token2Amount - quote)
-    let quote = self.preciseDiv(numerator: poolAmounts.token2Amount * amount, denominator: poolAmounts.token1Amount + amount);
+    let quote = poolAmounts.token2Amount * amount / (poolAmounts.token1Amount + amount);
 
     return quote
   }
@@ -284,15 +274,10 @@ pub contract FlowSwapPair: FungibleToken {
   pub fun quoteSwapToken1ForExactToken2(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
-    if poolAmounts.token2Amount <= amount {
-      // Not enough Token2 in the pool
-      return 184467440737.09551615
-    }
-
     assert(poolAmounts.token2Amount > amount, message: "Not enough Token2 in the pool")
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + quote) * (token2Amount - amount)
-    let quote = self.preciseDiv(numerator: poolAmounts.token1Amount * amount, denominator: poolAmounts.token2Amount - amount);
+    let quote = poolAmounts.token1Amount * amount / (poolAmounts.token2Amount - amount);
 
     return quote
   }
@@ -302,7 +287,7 @@ pub contract FlowSwapPair: FungibleToken {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
-    let quote = self.preciseDiv(numerator: poolAmounts.token1Amount * amount, denominator: poolAmounts.token2Amount + amount);
+    let quote = poolAmounts.token1Amount * amount / (poolAmounts.token2Amount + amount);
 
     return quote
   }
@@ -311,15 +296,10 @@ pub contract FlowSwapPair: FungibleToken {
   pub fun quoteSwapToken2ForExactToken1(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
-    if poolAmounts.token1Amount <= amount {
-      // Not enough Token1 in the pool
-      return 184467440737.09551615
-    }
-
     assert(poolAmounts.token1Amount > amount, message: "Not enough Token1 in the pool")
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + quote) * (token1Amount - amount)
-    let quote = self.preciseDiv(numerator: poolAmounts.token2Amount * amount, denominator: poolAmounts.token1Amount - amount);
+    let quote = poolAmounts.token2Amount * amount / (poolAmounts.token1Amount - amount);
 
     return quote
   }
@@ -386,8 +366,8 @@ pub contract FlowSwapPair: FungibleToken {
     assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
     assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
 
-    let token1Percentage: UFix64 = token1Vault.balance / (FlowSwapPair.token1Vault.balance / self.shifter)
-    let token2Percentage: UFix64 = token2Vault.balance / (FlowSwapPair.token2Vault.balance / self.shifter)
+    let token1Percentage: UFix64 = token1Vault.balance / FlowSwapPair.token1Vault.balance
+    let token2Percentage: UFix64 = token2Vault.balance / FlowSwapPair.token2Vault.balance
 
     // final liquidity token minted is the smaller between token1Liquidity and token2Liquidity
     // to maximize profit, user should add liquidity propotional to current liquidity
@@ -398,7 +378,7 @@ pub contract FlowSwapPair: FungibleToken {
     FlowSwapPair.token1Vault.deposit(from: <- token1Vault)
     FlowSwapPair.token2Vault.deposit(from: <- token2Vault)
 
-    let liquidityTokenVault <- FlowSwapPair.mintTokens(amount: (FlowSwapPair.totalSupply / self.shifter) * liquidityPercentage)
+    let liquidityTokenVault <- FlowSwapPair.mintTokens(amount: FlowSwapPair.totalSupply * liquidityPercentage)
 
     destroy from
     return <- liquidityTokenVault
@@ -410,15 +390,15 @@ pub contract FlowSwapPair: FungibleToken {
       from.balance < FlowSwapPair.totalSupply: "Cannot remove all liquidity"
     }
 
-    let liquidityPercentage = from.balance / (FlowSwapPair.totalSupply / self.shifter)
+    let liquidityPercentage = from.balance / FlowSwapPair.totalSupply
 
     assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
 
     // Burn liquidity tokens and withdraw
     FlowSwapPair.burnTokens(from: <- from)
 
-    let token1Vault <- FlowSwapPair.token1Vault.withdraw(amount: (FlowSwapPair.token1Vault.balance / self.shifter) * liquidityPercentage) as! @FlowToken.Vault
-    let token2Vault <- FlowSwapPair.token2Vault.withdraw(amount: (FlowSwapPair.token2Vault.balance / self.shifter) * liquidityPercentage) as! @TeleportedTetherToken.Vault
+    let token1Vault <- FlowSwapPair.token1Vault.withdraw(amount: FlowSwapPair.token1Vault.balance * liquidityPercentage) as! @FlowToken.Vault
+    let token2Vault <- FlowSwapPair.token2Vault.withdraw(amount: FlowSwapPair.token2Vault.balance * liquidityPercentage) as! @TeleportedTetherToken.Vault
 
     let tokenBundle <- FlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
     return <- tokenBundle
@@ -428,7 +408,6 @@ pub contract FlowSwapPair: FungibleToken {
     self.isFrozen = true // frozen until admin unfreezes
     self.totalSupply = 0.0
     self.feePercentage = 0.003 // 0.3%
-    self.shifter = 10000.0
 
     self.TokenStoragePath = /storage/flowUsdtFspLpVault
     self.TokenPublicBalancePath = /public/flowUsdtFspLpBalance
