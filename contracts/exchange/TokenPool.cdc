@@ -19,9 +19,6 @@ pub contract TokenPool {
   // Price to buy back FLOW
   pub var buyBackPrice: UFix64
 
-  // Used for precise calculations
-  pub var shifter: UFix64
-
   // Constant for maximum of UFix64
   pub let UFIX64_MAX: UFix64
 
@@ -119,11 +116,6 @@ pub contract TokenPool {
     )
   }
 
-  // Precise division to mitigate fixed-point division error
-  pub fun preciseDiv(numerator: UFix64, denominator: UFix64): UFix64 {
-    return (numerator / (denominator / self.shifter)) / self.shifter;
-  }
-
   // Get quote for Token1 (given) -> Token2
   pub fun quoteSwapExactToken1ForToken2(amount: UFix64): UFix64 {
     let quote = amount * self.buyBackPrice
@@ -137,7 +129,7 @@ pub contract TokenPool {
   pub fun quoteSwapToken1ForExactToken2(amount: UFix64): UFix64 {
     assert(self.token2Vault.balance > amount, message: "Not enough Token2 in the pool")
 
-    return self.preciseDiv(numerator: amount, denominator: self.buyBackPrice)
+    return amount / self.buyBackPrice
   }
 
   // Get quote for Token2 (given) -> Token1
@@ -145,7 +137,7 @@ pub contract TokenPool {
     let poolAmounts = self.getVirtualPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
-    let quote = self.preciseDiv(numerator: poolAmounts.token1Amount * amount, denominator: poolAmounts.token2Amount + amount);
+    let quote = poolAmounts.token1Amount * amount / (poolAmounts.token2Amount + amount);
 
     return self.token1Vault.balance > quote ? quote : self.token1Vault.balance
   }
@@ -160,7 +152,7 @@ pub contract TokenPool {
     }
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + quote) * (token1Amount - amount)
-    let quote = self.preciseDiv(numerator: poolAmounts.token2Amount * amount, denominator: poolAmounts.token1Amount - amount);
+    let quote = poolAmounts.token2Amount * amount / (poolAmounts.token1Amount - amount);
 
     return quote
   }
@@ -201,7 +193,7 @@ pub contract TokenPool {
 
     // Add to Swap liquidity pool
     let fspPoolAmounts = FlowSwapPair.getPoolAmounts()
-    let token1LiquidityAmount = self.preciseDiv(numerator: fspPoolAmounts.token1Amount * token2Amount, denominator: fspPoolAmounts.token2Amount)
+    let token1LiquidityAmount = fspPoolAmounts.token1Amount * token2Amount / fspPoolAmounts.token2Amount
 
     if token1LiquidityAmount + token1Amount < self.token1Vault.balance {
       let token1Vault <- self.token1Vault.withdraw(amount: token1LiquidityAmount) as! @FlowToken.Vault
@@ -227,7 +219,6 @@ pub contract TokenPool {
     self.virtualToken1Amount = 100000.0
     self.virtualToken2Amount = 38000.0
     self.buyBackPrice = 0.001
-    self.shifter = 10000.0
     self.UFIX64_MAX = 184467440737.09551615
 
     // Setup internal FlowToken vault
