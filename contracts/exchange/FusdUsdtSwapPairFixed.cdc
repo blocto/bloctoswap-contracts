@@ -7,6 +7,7 @@ import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
 // Token1: FUSD - Flow USD
 // Token2: tUSDT - TeleportedTetherToken
 pub contract FusdUsdtSwapPair {
+
   // Frozen flag controlled by Swap Admin
   pub var isFrozen: Bool
   
@@ -15,9 +16,6 @@ pub contract FusdUsdtSwapPair {
 
   // Fee charged when performing token swap
   pub var feePercentage: UFix64
-
-  // Used for precise calculations
-  pub var shifter: UFix64
 
   // Controls FUSD vault
   access(contract) let token1Vault: @FUSD.Vault
@@ -66,13 +64,6 @@ pub contract FusdUsdtSwapPair {
       FusdUsdtSwapPair.isFrozen = false
     }
 
-    pub fun getFeeAmounts(): [UFix64] {
-      return [
-        FusdUsdtSwapPair.token1FeeVault.balance,
-        FusdUsdtSwapPair.token2FeeVault.balance
-      ]
-    }
-
     pub fun withdrawToken1Fee(amount: UFix64): @FUSD.Vault {
       return <- (FusdUsdtSwapPair.token1FeeVault.withdraw(amount: amount) as! @FUSD.Vault)
     }
@@ -106,11 +97,12 @@ pub contract FusdUsdtSwapPair {
     )
   }
 
-  // Precise division to mitigate fixed-point division error
-  pub fun preciseDiv(numerator: UFix64, denominator: UFix64): UFix64 {
-    return (numerator /
-        (denominator / self.shifter)
-      ) / self.shifter;
+  // Check current fee amounts
+  pub fun getFeeAmounts(): PoolAmounts {
+    return PoolAmounts(
+      token1Amount: FusdUsdtSwapPair.token1FeeVault.balance,
+      token2Amount: FusdUsdtSwapPair.token2FeeVault.balance
+    )
   }
 
   // Get quote for Token1 (given) -> Token2
@@ -161,8 +153,10 @@ pub contract FusdUsdtSwapPair {
     }
 
     // collect fee if fee percentage is non-zero
-    if (self.feePercentage > UFix64(0)) {
-      let fee <- from.withdraw(amount: from.balance * self.feePercentage)
+    let feeAmount = from.balance * self.feePercentage
+
+    if (feeAmount> UFix64(0)) {
+      let fee <- from.withdraw(amount: feeAmount)
       self.token1FeeVault.deposit(from: <- (fee as! @FungibleToken.Vault))
     }
 
@@ -185,8 +179,10 @@ pub contract FusdUsdtSwapPair {
     }
 
     // collect fee if fee percentage is non-zero
-    if (self.feePercentage > UFix64(0)) {
-      let fee <- from.withdraw(amount: from.balance * self.feePercentage)
+    let feeAmount = from.balance * self.feePercentage
+
+    if (feeAmount> UFix64(0)) {
+      let fee <- from.withdraw(amount: feeAmount)
       self.token2FeeVault.deposit(from: <- (fee as! @FungibleToken.Vault))
     }
 
@@ -205,7 +201,6 @@ pub contract FusdUsdtSwapPair {
     self.isFrozen = true // frozen until swap admin unfreezes
     self.totalSupply = 0.0
     self.feePercentage = 0.003 // 0.3%
-    self.shifter = 10000.0
 
     // Setup internal FUSD vault
     self.token1Vault <- FUSD.createEmptyVault() as! @FUSD.Vault
