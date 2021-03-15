@@ -228,21 +228,6 @@ pub contract FlowSwapPair: FungibleToken {
       // Create initial tokens
       return <- FlowSwapPair.mintTokens(amount: 1.0)
     }
-
-    // For development. Remove after stable
-    pub fun removeLiquidity(amountToken1: UFix64, amountToken2: UFix64): @FlowSwapPair.TokenBundle {
-      let token1Vault <- FlowSwapPair.token1Vault.withdraw(amount: amountToken1) as! @FlowToken.Vault
-      let token2Vault <- FlowSwapPair.token2Vault.withdraw(amount: amountToken2) as! @TeleportedTetherToken.Vault
-
-      let tokenBundle <- FlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
-      return <- tokenBundle
-    }
-
-    pub fun updateFeePercentage(feePercentage: UFix64) {
-      FlowSwapPair.feePercentage = feePercentage
-
-      emit FeeUpdated(feePercentage: feePercentage)
-    }
   }
 
   pub struct PoolAmounts {
