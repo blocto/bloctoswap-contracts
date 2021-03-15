@@ -208,26 +208,6 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     pub fun unfreeze() {
       FusdUsdtSwapPair.isFrozen = false
     }
-
-    pub fun addInitialLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
-      pre {
-        FusdUsdtSwapPair.totalSupply == UFix64(0): "Pair already initialized"
-      }
-
-      let token1Vault <- from.withdrawToken1()
-      let token2Vault <- from.withdrawToken2()
-
-      assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
-      assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
-
-      FusdUsdtSwapPair.token1Vault.deposit(from: <- token1Vault)
-      FusdUsdtSwapPair.token2Vault.deposit(from: <- token2Vault)
-
-      destroy from
-
-      // Create initial tokens
-      return <- FusdUsdtSwapPair.mintTokens(amount: 1.0)
-    }
   }
 
   pub struct PoolAmounts {
@@ -336,9 +316,29 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     destroy from
   }
 
+  pub fun addInitialLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
+    pre {
+      self.totalSupply == UFix64(0): "Pair already initialized"
+    }
+
+    let token1Vault <- from.withdrawToken1()
+    let token2Vault <- from.withdrawToken2()
+
+    assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
+    assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+
+    self.token1Vault.deposit(from: <- token1Vault)
+    self.token2Vault.deposit(from: <- token2Vault)
+
+    destroy from
+
+    // Create initial tokens
+    return <- FusdUsdtSwapPair.mintTokens(amount: 1.0)
+  }
+
   pub fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
     pre {
-      self.totalSupply > UFix64(0): "Pair must be initialized by admin first"
+      self.totalSupply > UFix64(0): "Pair must be initialized first"
     }
 
     let token1Vault <- from.withdrawToken1()
