@@ -208,6 +208,12 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     pub fun unfreeze() {
       FusdUsdtSwapPair.isFrozen = false
     }
+
+    pub fun updateFeePercentage(feePercentage: UFix64) {
+      FusdUsdtSwapPair.feePercentage = feePercentage
+
+      emit FeeUpdated(feePercentage: feePercentage)
+    }
   }
 
   pub struct PoolAmounts {

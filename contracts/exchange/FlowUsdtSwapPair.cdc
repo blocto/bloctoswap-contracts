@@ -228,6 +228,12 @@ pub contract FlowSwapPair: FungibleToken {
       // Create initial tokens
       return <- FlowSwapPair.mintTokens(amount: 1.0)
     }
+
+    pub fun updateFeePercentage(feePercentage: UFix64) {
+      FlowSwapPair.feePercentage = feePercentage
+
+      emit FeeUpdated(feePercentage: feePercentage)
+    }
   }
 
   pub struct PoolAmounts {
