@@ -200,6 +200,24 @@ pub contract FlowSwapPair: FungibleToken {
     emit TokensBurned(amount: amount)
   }
 
+  pub resource SwapProxy {
+    pub fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
+      return <- FlowSwapPair.swapToken1ForToken2(from: <-from)
+    }
+
+    pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
+      return <- FlowSwapPair.swapToken2ForToken1(from: <-from)
+    }
+
+    pub fun addLiquidity(from: @FlowSwapPair.TokenBundle): @FlowSwapPair.Vault {
+      return <- FlowSwapPair.addLiquidity(from: <-from)
+    }
+
+    pub fun removeLiquidity(from: @FlowSwapPair.Vault): @FlowSwapPair.TokenBundle {
+      return <- FlowSwapPair.removeLiquidity(from: <-from)
+    }
+  }
+
   pub resource Admin {
     pub fun freeze() {
       FlowSwapPair.isFrozen = true
@@ -233,6 +251,10 @@ pub contract FlowSwapPair: FungibleToken {
       FlowSwapPair.feePercentage = feePercentage
 
       emit FeeUpdated(feePercentage: feePercentage)
+    }
+
+    pub fun createSwapProxy(): @FlowSwapPair.SwapProxy {
+      return <- create FlowSwapPair.SwapProxy()
     }
   }
 
@@ -296,7 +318,7 @@ pub contract FlowSwapPair: FungibleToken {
   }
 
   // Swaps Token1 (FLOW) -> Token2 (tUSDT)
-  access(account) fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
+  access(contract) fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
     pre {
       !FlowSwapPair.isFrozen: "FlowSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
@@ -316,7 +338,7 @@ pub contract FlowSwapPair: FungibleToken {
   }
 
   // Swap Token2 (tUSDT) -> Token1 (FLOW)
-  access(account) fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
+  access(contract) fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
     pre {
       !FlowSwapPair.isFrozen: "FlowSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
@@ -346,7 +368,7 @@ pub contract FlowSwapPair: FungibleToken {
     destroy from
   }
 
-  access(account) fun addLiquidity(from: @FlowSwapPair.TokenBundle): @FlowSwapPair.Vault {
+  access(contract) fun addLiquidity(from: @FlowSwapPair.TokenBundle): @FlowSwapPair.Vault {
     pre {
       self.totalSupply > UFix64(0): "Pair must be initialized by admin first"
     }
@@ -376,7 +398,7 @@ pub contract FlowSwapPair: FungibleToken {
     return <- liquidityTokenVault
   }
 
-  access(account) fun removeLiquidity(from: @FlowSwapPair.Vault): @FlowSwapPair.TokenBundle {
+  access(contract) fun removeLiquidity(from: @FlowSwapPair.Vault): @FlowSwapPair.TokenBundle {
     pre {
       from.balance > UFix64(0): "Empty liquidity token vault"
       from.balance < FlowSwapPair.totalSupply: "Cannot remove all liquidity"
