@@ -13,6 +13,14 @@ pub contract FusdUsdtSwapPairProxy {
     pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
       return <- FusdUsdtSwapPair.swapToken2ForToken1(from: <-from)
     }
+
+    pub fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
+      return <- FusdUsdtSwapPair.addLiquidity(from: <-from)
+    }
+
+    pub fun removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
+      return <- FusdUsdtSwapPair.removeLiquidity(from: <-from, token1Amount: token1Amount, token2Amount: token2Amount)
+    }
   }
 
   init() {

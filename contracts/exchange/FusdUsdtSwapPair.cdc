@@ -332,7 +332,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     return <- FusdUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
   }
 
-  pub fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
+  access(account) fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
     pre {
       self.totalSupply > UFix64(0): "Pair must be initialized first"
     }
@@ -351,7 +351,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     return <- liquidityTokenVault
   }
 
-  pub fun removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
+  access(account) fun removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
     pre {
       from.balance > UFix64(0): "Empty liquidity token vault"
       from.balance < FusdUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
