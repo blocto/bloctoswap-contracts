@@ -12,9 +12,6 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   // Total supply of FusdUsdtSwapPair liquidity token in existence
   pub var totalSupply: UFix64
 
-  // Fee charged when performing token swap
-  pub var feePercentage: UFix64
-
   // Controls FUSD vault
   access(contract) let token1Vault: @FUSD.Vault
 
@@ -44,9 +41,6 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
   // Event that is emitted when tokens are destroyed
   pub event TokensBurned(amount: UFix64)
-
-  // Event that is emitted when trading fee is updated
-  pub event FeeUpdated(feePercentage: UFix64)
 
   // Event that is emitted when a swap happens
   // Side 1: from token1 to token2
@@ -208,12 +202,6 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     pub fun unfreeze() {
       FusdUsdtSwapPair.isFrozen = false
     }
-
-    pub fun updateFeePercentage(feePercentage: UFix64) {
-      FusdUsdtSwapPair.feePercentage = feePercentage
-
-      emit FeeUpdated(feePercentage: feePercentage)
-    }
   }
 
   pub struct PoolAmounts {
@@ -272,7 +260,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   }
 
   // Swaps Token1 (FUSD) -> Token2 (tUSDT)
-  pub fun swapToken1ForToken2(from: @FUSD.Vault): @TeleportedTetherToken.Vault {
+  access(account) fun swapToken1ForToken2(from: @FUSD.Vault): @TeleportedTetherToken.Vault {
     pre {
       !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
@@ -280,7 +268,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token1Amount = from.balance * (1.0 - self.feePercentage)
+    let token1Amount = from.balance
     let token2Amount = self.quoteSwapExactToken1ForToken2(amount: token1Amount)
 
     assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
@@ -292,7 +280,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   }
 
   // Swap Token2 (tUSDT) -> Token1 (FUSD)
-  pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
+  access(account) fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
     pre {
       !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
@@ -300,7 +288,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token2Amount = from.balance * (1.0 - self.feePercentage)
+    let token2Amount = from.balance
     let token1Amount = self.quoteSwapExactToken2ForToken1(amount: token2Amount)
 
     assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
@@ -333,16 +321,18 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
     assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
 
+    let totalLiquidityAmount = token1Vault.balance + token2Vault.balance
+
     self.token1Vault.deposit(from: <- token1Vault)
     self.token2Vault.deposit(from: <- token2Vault)
 
     destroy from
 
     // Create initial tokens
-    return <- FusdUsdtSwapPair.mintTokens(amount: 1.0)
+    return <- FusdUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
   }
 
-  pub fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
+  access(account) fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
     pre {
       self.totalSupply > UFix64(0): "Pair must be initialized first"
     }
@@ -353,39 +343,26 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
     assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
 
-    let token1Percentage: UFix64 = token1Vault.balance / FusdUsdtSwapPair.token1Vault.balance
-    let token2Percentage: UFix64 = token2Vault.balance / FusdUsdtSwapPair.token2Vault.balance
+    let totalLiquidityAmount = token1Vault.balance + token2Vault.balance
 
-    // final liquidity token minted is the smaller between token1Liquidity and token2Liquidity
-    // to maximize profit, user should add liquidity propotional to current liquidity
-    let liquidityPercentage = token1Percentage < token2Percentage ? token1Percentage : token2Percentage;
-
-    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
-
-    FusdUsdtSwapPair.token1Vault.deposit(from: <- token1Vault)
-    FusdUsdtSwapPair.token2Vault.deposit(from: <- token2Vault)
-
-    let liquidityTokenVault <- FusdUsdtSwapPair.mintTokens(amount: FusdUsdtSwapPair.totalSupply * liquidityPercentage)
+    let liquidityTokenVault <- FusdUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
 
     destroy from
     return <- liquidityTokenVault
   }
 
-  pub fun removeLiquidity(from: @FusdUsdtSwapPair.Vault): @FusdUsdtSwapPair.TokenBundle {
+  access(account) fun removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
     pre {
       from.balance > UFix64(0): "Empty liquidity token vault"
       from.balance < FusdUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
+      from.balance == token1Amount + token2Amount: "Incorrect withdrawal amounts"
     }
-
-    let liquidityPercentage = from.balance / FusdUsdtSwapPair.totalSupply
-
-    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
 
     // Burn liquidity tokens and withdraw
     FusdUsdtSwapPair.burnTokens(from: <- from)
 
-    let token1Vault <- FusdUsdtSwapPair.token1Vault.withdraw(amount: FusdUsdtSwapPair.token1Vault.balance * liquidityPercentage) as! @FUSD.Vault
-    let token2Vault <- FusdUsdtSwapPair.token2Vault.withdraw(amount: FusdUsdtSwapPair.token2Vault.balance * liquidityPercentage) as! @TeleportedTetherToken.Vault
+    let token1Vault <- FusdUsdtSwapPair.token1Vault.withdraw(amount: token1Amount) as! @FUSD.Vault
+    let token2Vault <- FusdUsdtSwapPair.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault
 
     let tokenBundle <- FusdUsdtSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
     return <- tokenBundle
@@ -394,7 +371,6 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   init() {
     self.isFrozen = true // frozen until admin unfreezes
     self.totalSupply = 0.0
-    self.feePercentage = 0.003 // 0.3%
 
     self.TokenStoragePath = /storage/fusdUsdtFspLpVault
     self.TokenPublicBalancePath = /public/fusdUsdtFspLpBalance
