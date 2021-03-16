@@ -12,7 +12,7 @@ transaction(amountIn: UFix64) {
   // The proxy holder reference for access control
   let swapProxyRef: &FusdUsdtSwapPairProxy.SwapProxy
 
-  prepare(signer: AuthAccount) {
+  prepare(signer: AuthAccount, proxyHolder: AuthAccount) {
     self.tetherVault = signer.borrow<&TeleportedTetherToken.Vault>(from: TeleportedTetherToken.TokenStoragePath)
       ?? panic("Could not borrow a reference to tUSDT Vault")
 
