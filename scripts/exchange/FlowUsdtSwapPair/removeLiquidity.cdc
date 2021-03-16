@@ -4,7 +4,7 @@ import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
 import FlowSwapPair from 0xFLOWSWAPPAIRADDRESS
 import FlowSwapPairProxy from 0xFLOWSWAPPAIRADDRESS
 
-transaction(token1Amount: UFix64, token2Amount: UFix64) {
+transaction(amount: UFix64) {
   // The Vault reference for liquidity tokens
   let liquidityTokenRef: &FlowSwapPair.Vault
 
