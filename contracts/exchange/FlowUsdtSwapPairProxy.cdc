@@ -24,7 +24,7 @@ pub contract FlowSwapPairProxy {
   }
 
   init() {
-    self.SwapProxyStoragePath = /storage/flowSwapProxy
+    self.SwapProxyStoragePath = /storage/flowUsdtSwapPairProxy
 
     let proxy <- create SwapProxy()
 
