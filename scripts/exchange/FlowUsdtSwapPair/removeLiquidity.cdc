@@ -1,28 +1,44 @@
-// This transaction is a template for a transaction
-// to add a Vault resource to their account
-// so that they can use the teleportedTetherToken (USDT)
+import FungibleToken from 0xFUNGIBLETOKENADDRESS
+import FlowToken from 0xFLOWTOKENADDRESS
+import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
+import FlowSwapPair from 0xFLOWSWAPPAIRADDRESS
+import FlowSwapPairProxy from 0xFLOWSWAPPAIRADDRESS
 
-import FungibleToken from 0x01
-import FlowToken from 0x02
-import TeleportedTetherToken from 0x03
-import FlowSwapPair from 0x04
+transaction(token1Amount: UFix64, token2Amount: UFix64) {
+  // The Vault reference for liquidity tokens
+  let liquidityTokenRef: &FlowSwapPair.Vault
 
-transaction {
-  prepare(signer: AuthAccount) {
-    let flowSwapPairVault = signer.borrow<&FlowSwapPair.Vault>(from: /storage/flowUsdtFspLpVault)
-        ?? panic("Could not borrow a reference to Vault")
-    
-    let liquidityTokenVault <- flowSwapPairVault.withdraw(amount: 1.0) as! @FlowSwapPair.Vault
-    let tokenBundle <- FlowSwapPair.removeLiquidity(from: <-liquidityTokenVault)
+  // The proxy holder reference for access control
+  let swapProxyRef: &FlowSwapPairProxy.SwapProxy
 
-    let flowTokenVault = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
-        ?? panic("Could not borrow a reference to Vault")
+  // The Vault references that holds the tokens that are being transferred
+  let flowTokenVaultRef: &FlowToken.Vault
+  let tetherVaultRef: &TeleportedTetherToken.Vault
 
-    let tetherVault = signer.borrow<&TeleportedTetherToken.Vault>(from: /storage/teleportedTetherTokenVault)
-        ?? panic("Could not borrow a reference to Vault")
-        
-    flowTokenVault.deposit(from: <- tokenBundle.withdrawToken1())
-    tetherVault.deposit(from: <- tokenBundle.withdrawToken2())
+  prepare(signer: AuthAccount, proxyHolder: AuthAccount) {
+    self.liquidityTokenRef = signer.borrow<&FlowSwapPair.Vault>(from: FlowSwapPair.TokenStoragePath)
+      ?? panic("Could not borrow a reference to Vault")
+
+    self.swapProxyRef = proxyHolder.borrow<&FlowSwapPairProxy.SwapProxy>(from: FlowSwapPairProxy.SwapProxyStoragePath)
+      ?? panic("Could not borrow a reference to proxy holder")
+
+    self.flowTokenVaultRef = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
+      ?? panic("Could not borrow a reference to Vault")
+
+    self.tetherVaultRef = signer.borrow<&TeleportedTetherToken.Vault>(from: /storage/teleportedTetherTokenVault)
+      ?? panic("Could not borrow a reference to Vault")
+  }
+
+  execute {
+    // Withdraw liquidity provider tokens
+    let liquidityTokenRef <- self.liquidityTokenRef.withdraw(amount: amount) as! @FlowSwapPair.Vault
+
+    // Take back liquidity
+    let tokenBundle <- self.swapProxyRef.removeLiquidity(from: <-liquidityTokenVault)
+
+    // Deposit liquidity tokens
+    self.flowTokenVaultRef.deposit(from: <- tokenBundle.withdrawToken1())
+    self.tetherVaultRef.deposit(from: <- tokenBundle.withdrawToken2())
 
     destroy tokenBundle
   }
