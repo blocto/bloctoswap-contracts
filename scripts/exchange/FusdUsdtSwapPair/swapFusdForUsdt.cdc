@@ -12,7 +12,7 @@ transaction(amountIn: UFix64) {
   // The proxy holder reference for access control
   let swapProxyRef: &FusdUsdtSwapPairProxy.SwapProxy
 
-  prepare(signer: AuthAccount) {
+  prepare(signer: AuthAccount, proxyHolder: AuthAccount) {
     self.fusdVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)
       ?? panic("Could not borrow a reference to FUSD Vault")
 

@@ -3,7 +3,7 @@ import FUSD from 0xFUSDADDRESS
 import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
 import FusdUsdtSwapPair from 0xFUSDUSDTSWAPPAIRADDRESS
 
-transaction(amount: UFix64) {
+transaction(amount: UFix64, token1Amount: UFix64, token2Amount: UFix64) {
   // The Vault reference for liquidity tokens that are being transferred
   let liquidityTokenRef: &FusdUsdtSwapPair.Vault
 
@@ -12,6 +12,8 @@ transaction(amount: UFix64) {
   let tetherVaultRef: &TeleportedTetherToken.Vault
 
   prepare(signer: AuthAccount) {
+    assert(amount == token1Amount + token2Amount: "Incosistent liquidtiy amounts")
+
     self.liquidityTokenRef = signer.borrow<&FusdUsdtSwapPair.Vault>(from: FusdUsdtSwapPair.TokenStoragePath)
         ?? panic("Could not borrow a reference to Vault")
 
@@ -27,7 +29,7 @@ transaction(amount: UFix64) {
     let liquidityTokenVault <- self.liquidityTokenRef.withdraw(amount: amount) as! @FusdUsdtSwapPair.Vault
 
     // Take back liquidity
-    let tokenBundle <- FusdUsdtSwapPair.removeLiquidity(from: <-liquidityTokenVault)
+    let tokenBundle <- FusdUsdtSwapPair.removeLiquidity(from: <-liquidityTokenVault, token1Amount: token1Amount, token2Amount: token2Amount)
 
     // Deposit liquidity tokens
     self.fusdVaultRef.deposit(from: <- tokenBundle.withdrawToken1())
