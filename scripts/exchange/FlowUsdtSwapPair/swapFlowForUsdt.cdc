@@ -2,7 +2,6 @@ import FungibleToken from 0xFUNGIBLETOKENADDRESS
 import FlowToken from 0xFLOWTOKENADDRESS
 import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
 import FlowSwapPair from 0xFLOWSWAPPAIRADDRESS
-import FlowSwapPairProxy from 0xFLOWSWAPPAIRADDRESS
 
 transaction(amountIn: UFix64) {
   // The Vault references that holds the tokens that are being transferred
@@ -10,7 +9,7 @@ transaction(amountIn: UFix64) {
   let tetherVaultRef: &TeleportedTetherToken.Vault
 
   // The proxy holder reference for access control
-  let swapProxyRef: &FlowSwapPairProxy.SwapProxy
+  let swapProxyRef: &FlowSwapPair.SwapProxy
 
   prepare(signer: AuthAccount, proxyHolder: AuthAccount) {
     self.flowTokenVaultRef = signer.borrow<&FlowToken.Vault>(from: /storage/flowTokenVault)
@@ -38,7 +37,7 @@ transaction(amountIn: UFix64) {
     self.tetherVaultRef = signer.borrow<&TeleportedTetherToken.Vault>(from: TeleportedTetherToken.TokenStoragePath)
       ?? panic("Could not borrow a reference to tUSDT Vault")
 
-    self.swapProxyRef = proxyHolder.borrow<&FlowSwapPairProxy.SwapProxy>(from: FlowSwapPairProxy.SwapProxyStoragePath)
+    self.swapProxyRef = proxyHolder.borrow<&FlowSwapPair.SwapProxy>(from: /storage/flowUsdtSwapProxy)
       ?? panic("Could not borrow a reference to proxy holder")
   }
 
