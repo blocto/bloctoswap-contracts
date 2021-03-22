@@ -345,6 +345,9 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
     let totalLiquidityAmount = token1Vault.balance + token2Vault.balance
 
+    self.token1Vault.deposit(from: <- token1Vault)
+    self.token2Vault.deposit(from: <- token2Vault)
+
     let liquidityTokenVault <- FusdUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
 
     destroy from
