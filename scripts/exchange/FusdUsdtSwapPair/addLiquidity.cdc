@@ -2,20 +2,16 @@ import FungibleToken from 0xFUNGIBLETOKENADDRESS
 import FUSD from 0xFUSDADDRESS
 import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
 import FusdUsdtSwapPair from 0xFUSDUSDTSWAPPAIRADDRESS
-import FusdUsdtSwapPairProxy from 0xFUSDUSDTSWAPPAIRADDRESS
 
 transaction(token1Amount: UFix64, token2Amount: UFix64) {
   // The Vault references that holds the tokens that are being transferred
   let fusdVault: &FUSD.Vault
   let tetherVault: &TeleportedTetherToken.Vault
-  
-  // The proxy holder reference for access control
-  let swapProxyRef: &FusdUsdtSwapPairProxy.SwapProxy
 
   // The Vault reference for liquidity tokens
   let liquidityTokenRef: &FusdUsdtSwapPair.Vault
 
-  prepare(signer: AuthAccount, proxyHolder: AuthAccount) {
+  prepare(signer: AuthAccount) {
     self.fusdVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)
         ?? panic("Could not borrow a reference to Vault")
 
@@ -43,9 +39,6 @@ transaction(token1Amount: UFix64, token2Amount: UFix64) {
 
     self.liquidityTokenRef = signer.borrow<&FusdUsdtSwapPair.Vault>(from: FusdUsdtSwapPair.TokenStoragePath)
       ?? panic("Could not borrow a reference to Vault")
-
-    self.swapProxyRef = proxyHolder.borrow<&FusdUsdtSwapPairProxy.SwapProxy>(from: FusdUsdtSwapPairProxy.SwapProxyStoragePath)
-      ?? panic("Could not borrow a reference to proxy holder")
   }
 
   execute {
@@ -55,7 +48,7 @@ transaction(token1Amount: UFix64, token2Amount: UFix64) {
 
     // Provide liquidity and get liquidity provider tokens
     let tokenBundle <- FusdUsdtSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
-    let liquidityTokenVault <- self.swapProxyRef.addLiquidity(from: <- tokenBundle)
+    let liquidityTokenVault <- FusdUsdtSwapPair.addLiquidity(from: <- tokenBundle)
 
     // Keep the liquidity provider tokens
     self.liquidityTokenRef.deposit(from: <- liquidityTokenVault)
