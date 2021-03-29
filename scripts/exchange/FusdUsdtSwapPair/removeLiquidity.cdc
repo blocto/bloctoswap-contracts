@@ -7,6 +7,9 @@ transaction(amount: UFix64, token1Amount: UFix64, token2Amount: UFix64) {
   // The Vault reference for liquidity tokens that are being transferred
   let liquidityTokenRef: &FusdUsdtSwapPair.Vault
 
+  // The proxy holder reference for access control
+  let swapProxyRef: &FusdUsdtSwapPair.SwapProxy
+
   // The Vault references to receive the liquidity tokens
   let fusdVaultRef: &FUSD.Vault
   let tetherVaultRef: &TeleportedTetherToken.Vault
@@ -16,6 +19,9 @@ transaction(amount: UFix64, token1Amount: UFix64, token2Amount: UFix64) {
 
     self.liquidityTokenRef = signer.borrow<&FusdUsdtSwapPair.Vault>(from: FusdUsdtSwapPair.TokenStoragePath)
       ?? panic("Could not borrow a reference to Vault")
+
+    self.swapProxyRef = proxyHolder.borrow<&FusdUsdtSwapPair.SwapProxy>(from: /storage/fusdUsdtSwapProxy)
+      ?? panic("Could not borrow a reference to proxy holder")
 
     self.fusdVaultRef = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)
       ?? panic("Could not borrow a reference to Vault")
@@ -29,7 +35,7 @@ transaction(amount: UFix64, token1Amount: UFix64, token2Amount: UFix64) {
     let liquidityTokenVault <- self.liquidityTokenRef.withdraw(amount: amount) as! @FusdUsdtSwapPair.Vault
 
     // Take back liquidity
-    let tokenBundle <- FusdUsdtSwapPair.removeLiquidity(from: <-liquidityTokenVault, token1Amount: token1Amount, token2Amount: token2Amount)
+    let tokenBundle <- self.swapProxyRef.removeLiquidity(from: <-liquidityTokenVault, token1Amount: token1Amount, token2Amount: token2Amount)
 
     // Deposit liquidity tokens
     self.fusdVaultRef.deposit(from: <- tokenBundle.withdrawToken1())

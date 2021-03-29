@@ -8,6 +8,9 @@ transaction(amountIn: UFix64) {
   let fusdVault: &FUSD.Vault
   let tetherVault: &TeleportedTetherToken.Vault
 
+  // The proxy holder reference for access control
+  let swapProxyRef: &FusdUsdtSwapPair.SwapProxy
+
   prepare(signer: AuthAccount) {
     self.fusdVault = signer.borrow<&FUSD.Vault>(from: /storage/fusdVault)
       ?? panic("Could not borrow a reference to FUSD Vault")
@@ -33,12 +36,15 @@ transaction(amountIn: UFix64) {
 
     self.tetherVault = signer.borrow<&TeleportedTetherToken.Vault>(from: TeleportedTetherToken.TokenStoragePath)
       ?? panic("Could not borrow a reference to tUSDT Vault")
+
+    self.swapProxyRef = proxyHolder.borrow<&FusdUsdtSwapPair.SwapProxy>(from: /storage/fusdUsdtSwapProxy)
+      ?? panic("Could not borrow a reference to proxy holder")
   }
 
   execute {    
     let token1Vault <- self.fusdVault.withdraw(amount: amountIn) as! @FUSD.Vault
 
-    let token2Vault <- FusdUsdtSwapPair.swapToken1ForToken2(from: <-token1Vault)
+    let token2Vault <- self.swapProxyRef.swapToken1ForToken2(from: <-token1Vault)
 
     self.tetherVault.deposit(from: <- token2Vault)
   }
