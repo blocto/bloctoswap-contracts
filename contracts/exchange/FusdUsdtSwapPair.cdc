@@ -282,7 +282,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   }
 
   // Swaps Token1 (FUSD) -> Token2 (tUSDT)
-  pub fun swapToken1ForToken2(from: @FUSD.Vault): @TeleportedTetherToken.Vault {
+  access(contract) fun swapToken1ForToken2(from: @FUSD.Vault): @TeleportedTetherToken.Vault {
     pre {
       !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
@@ -302,7 +302,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   }
 
   // Swap Token2 (tUSDT) -> Token1 (FUSD)
-  pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
+  access(contract) fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
     pre {
       !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
@@ -354,7 +354,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     return <- FusdUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
   }
 
-  pub fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
+  access(contract) fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
     pre {
       self.totalSupply > UFix64(0): "Pair must be initialized first"
     }
@@ -376,7 +376,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     return <- liquidityTokenVault
   }
 
-  pub fun removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
+  access(contract) fun removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
     pre {
       from.balance > UFix64(0): "Empty liquidity token vault"
       from.balance < FusdUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
