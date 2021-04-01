@@ -212,6 +212,43 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     }
   }
 
+  pub resource interface SwapProxyReceiver {
+    pub fun depositSwapProxy(from: @FusdUsdtSwapPair.SwapProxy)
+  }
+
+  pub resource SwapProxyHolder: SwapProxyReceiver {
+    // holder for SwapProxy resource
+    pub var swapProxy: @FusdUsdtSwapPair.SwapProxy?
+
+    pub fun depositSwapProxy(from: @FusdUsdtSwapPair.SwapProxy) {
+      let oldSwapProxy <- self.swapProxy <- from
+
+      destroy oldSwapProxy
+    }
+
+    pub fun withdrawSwapProxy(): @FusdUsdtSwapPair.SwapProxy {
+      pre {
+        self.swapProxy != nil: "SwapProxy is not available"
+      }
+
+      let swapProxy <- self.swapProxy <- nil
+
+      return <- swapProxy!
+    }
+
+    init() {
+      self.swapProxy <- nil
+    }
+
+    destroy() {
+      destroy self.swapProxy
+    }
+  }
+
+  pub fun createSwapProxyHolder(): @FusdUsdtSwapPair.SwapProxyHolder {
+    return <- create SwapProxyHolder()
+  }
+
   pub resource Admin {
     pub fun freeze() {
       FusdUsdtSwapPair.isFrozen = true
