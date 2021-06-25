@@ -422,6 +422,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
   init() {
     self.isFrozen = true // frozen until admin unfreezes
     self.totalSupply = 0.0
+    self.feePercentage = 0.003 // 0.3%
 
     self.TokenStoragePath = /storage/bltUsdtFspLpVault
     self.TokenPublicBalancePath = /public/bltUsdtFspLpBalance
