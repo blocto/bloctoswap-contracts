@@ -12,6 +12,9 @@ pub contract BltUsdtSwapPair: FungibleToken {
   // Total supply of BltUsdtSwapPair liquidity token in existence
   pub var totalSupply: UFix64
 
+  // Fee charged when performing token swap
+  pub var feePercentage: UFix64
+
   // Controls BloctoToken vault
   access(contract) let token1Vault: @BloctoToken.Vault
 
@@ -41,6 +44,9 @@ pub contract BltUsdtSwapPair: FungibleToken {
 
   // Event that is emitted when tokens are destroyed
   pub event TokensBurned(amount: UFix64)
+
+  // Event that is emitted when trading fee is updated
+  pub event FeeUpdated(feePercentage: UFix64)
 
   // Event that is emitted when a swap happens
   // Side 1: from token1 to token2
@@ -207,46 +213,9 @@ pub contract BltUsdtSwapPair: FungibleToken {
       return <- BltUsdtSwapPair.addLiquidity(from: <-from)
     }
 
-    pub fun removeLiquidity(from: @BltUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @BltUsdtSwapPair.TokenBundle {
-      return <- BltUsdtSwapPair.removeLiquidity(from: <-from, token1Amount: token1Amount, token2Amount: token2Amount)
+    pub fun removeLiquidity(from: @BltUsdtSwapPair.Vault): @BltUsdtSwapPair.TokenBundle {
+      return <- BltUsdtSwapPair.removeLiquidity(from: <-from)
     }
-  }
-
-  pub resource interface SwapProxyReceiver {
-    pub fun depositSwapProxy(from: @BltUsdtSwapPair.SwapProxy)
-  }
-
-  pub resource SwapProxyHolder: SwapProxyReceiver {
-    // holder for SwapProxy resource
-    pub var swapProxy: @BltUsdtSwapPair.SwapProxy?
-
-    pub fun depositSwapProxy(from: @BltUsdtSwapPair.SwapProxy) {
-      let oldSwapProxy <- self.swapProxy <- from
-
-      destroy oldSwapProxy
-    }
-
-    pub fun withdrawSwapProxy(): @BltUsdtSwapPair.SwapProxy {
-      pre {
-        self.swapProxy != nil: "SwapProxy is not available"
-      }
-
-      let swapProxy <- self.swapProxy <- nil
-
-      return <- swapProxy!
-    }
-
-    init() {
-      self.swapProxy <- nil
-    }
-
-    destroy() {
-      destroy self.swapProxy
-    }
-  }
-
-  pub fun createSwapProxyHolder(): @BltUsdtSwapPair.SwapProxyHolder {
-    return <- create SwapProxyHolder()
   }
 
   pub resource Admin {
@@ -256,6 +225,32 @@ pub contract BltUsdtSwapPair: FungibleToken {
 
     pub fun unfreeze() {
       BltUsdtSwapPair.isFrozen = false
+    }
+
+    pub fun addInitialLiquidity(from: @BltUsdtSwapPair.TokenBundle): @BltUsdtSwapPair.Vault {
+      pre {
+        BltUsdtSwapPair.totalSupply == UFix64(0): "Pair already initialized"
+      }
+
+      let token1Vault <- from.withdrawToken1()
+      let token2Vault <- from.withdrawToken2()
+
+      assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
+      assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+
+      BltUsdtSwapPair.token1Vault.deposit(from: <- token1Vault)
+      BltUsdtSwapPair.token2Vault.deposit(from: <- token2Vault)
+
+      destroy from
+
+      // Create initial tokens
+      return <- BltUsdtSwapPair.mintTokens(amount: 1.0)
+    }
+
+    pub fun updateFeePercentage(feePercentage: UFix64) {
+      BltUsdtSwapPair.feePercentage = feePercentage
+
+      emit FeeUpdated(feePercentage: feePercentage)
     }
 
     pub fun createSwapProxy(): @BltUsdtSwapPair.SwapProxy {
@@ -280,45 +275,49 @@ pub contract BltUsdtSwapPair: FungibleToken {
 
   // Get quote for Token1 (given) -> Token2
   pub fun quoteSwapExactToken1ForToken2(amount: UFix64): UFix64 {
-    pre {
-      self.token2Vault.balance >= amount: "Not enough Token2 in the pool"
-    }
+    let poolAmounts = self.getPoolAmounts()
 
-    // Fixed price 1:1
-    return amount
+    // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + amount) * (token2Amount - quote)
+    let quote = poolAmounts.token2Amount * amount / (poolAmounts.token1Amount + amount);
+
+    return quote
   }
 
   // Get quote for Token1 -> Token2 (given)
   pub fun quoteSwapToken1ForExactToken2(amount: UFix64): UFix64 {
-    pre {
-      self.token2Vault.balance >= amount: "Not enough Token2 in the pool"
-    }
+    let poolAmounts = self.getPoolAmounts()
 
-    // Fixed price 1:1
-    return amount
+    assert(poolAmounts.token2Amount > amount, message: "Not enough Token2 in the pool")
+
+    // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + quote) * (token2Amount - amount)
+    let quote = poolAmounts.token1Amount * amount / (poolAmounts.token2Amount - amount);
+
+    return quote
   }
 
   // Get quote for Token2 (given) -> Token1
   pub fun quoteSwapExactToken2ForToken1(amount: UFix64): UFix64 {
-    pre {
-      self.token1Vault.balance >= amount: "Not enough Token1 in the pool"
-    }
+    let poolAmounts = self.getPoolAmounts()
 
-    // Fixed price 1:1
-    return amount
+    // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
+    let quote = poolAmounts.token1Amount * amount / (poolAmounts.token2Amount + amount);
+
+    return quote
   }
 
   // Get quote for Token2 -> Token1 (given)
   pub fun quoteSwapToken2ForExactToken1(amount: UFix64): UFix64 {
-    pre {
-      self.token1Vault.balance >= amount: "Not enough Token1 in the pool"
-    }
+    let poolAmounts = self.getPoolAmounts()
 
-    // Fixed price 1:1
-    return amount
+    assert(poolAmounts.token1Amount > amount, message: "Not enough Token1 in the pool")
+
+    // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + quote) * (token1Amount - amount)
+    let quote = poolAmounts.token2Amount * amount / (poolAmounts.token1Amount - amount);
+
+    return quote
   }
 
-  // Swaps Token1 (BloctoToken) -> Token2 (tUSDT)
+  // Swaps Token1 (BLT) -> Token2 (tUSDT)
   access(contract) fun swapToken1ForToken2(from: @BloctoToken.Vault): @TeleportedTetherToken.Vault {
     pre {
       !BltUsdtSwapPair.isFrozen: "BltUsdtSwapPair is frozen"
@@ -327,7 +326,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token1Amount = from.balance
+    let token1Amount = from.balance * (1.0 - self.feePercentage)
     let token2Amount = self.quoteSwapExactToken1ForToken2(amount: token1Amount)
 
     assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
@@ -338,7 +337,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
   }
 
-  // Swap Token2 (tUSDT) -> Token1 (BloctoToken)
+  // Swap Token2 (tUSDT) -> Token1 (BLT)
   access(contract) fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @BloctoToken.Vault {
     pre {
       !BltUsdtSwapPair.isFrozen: "BltUsdtSwapPair is frozen"
@@ -347,7 +346,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
 
     // Calculate amount from pricing curve
     // A fee portion is taken from the final amount
-    let token2Amount = from.balance
+    let token2Amount = from.balance * (1.0 - self.feePercentage)
     let token1Amount = self.quoteSwapExactToken2ForToken1(amount: token2Amount)
 
     assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
@@ -369,31 +368,9 @@ pub contract BltUsdtSwapPair: FungibleToken {
     destroy from
   }
 
-  pub fun addInitialLiquidity(from: @BltUsdtSwapPair.TokenBundle): @BltUsdtSwapPair.Vault {
-    pre {
-      self.totalSupply == UFix64(0): "Pair already initialized"
-    }
-
-    let token1Vault <- from.withdrawToken1()
-    let token2Vault <- from.withdrawToken2()
-
-    assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
-    assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
-
-    let totalLiquidityAmount = token1Vault.balance + token2Vault.balance
-
-    self.token1Vault.deposit(from: <- token1Vault)
-    self.token2Vault.deposit(from: <- token2Vault)
-
-    destroy from
-
-    // Create initial tokens
-    return <- BltUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
-  }
-
   access(contract) fun addLiquidity(from: @BltUsdtSwapPair.TokenBundle): @BltUsdtSwapPair.Vault {
     pre {
-      self.totalSupply > UFix64(0): "Pair must be initialized first"
+      self.totalSupply > UFix64(0): "Pair must be initialized by admin first"
     }
 
     let token1Vault <- from.withdrawToken1()
@@ -402,29 +379,41 @@ pub contract BltUsdtSwapPair: FungibleToken {
     assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
     assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
 
-    let totalLiquidityAmount = token1Vault.balance + token2Vault.balance
+    // shift decimal 4 places to avoid truncation error
+    let token1Percentage: UFix64 = (token1Vault.balance * 10000.0) / BltUsdtSwapPair.token1Vault.balance
+    let token2Percentage: UFix64 = (token2Vault.balance * 10000.0) / BltUsdtSwapPair.token2Vault.balance
 
-    self.token1Vault.deposit(from: <- token1Vault)
-    self.token2Vault.deposit(from: <- token2Vault)
+    // final liquidity token minted is the smaller between token1Liquidity and token2Liquidity
+    // to maximize profit, user should add liquidity propotional to current liquidity
+    let liquidityPercentage = token1Percentage < token2Percentage ? token1Percentage : token2Percentage;
 
-    let liquidityTokenVault <- BltUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
+    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
+
+    BltUsdtSwapPair.token1Vault.deposit(from: <- token1Vault)
+    BltUsdtSwapPair.token2Vault.deposit(from: <- token2Vault)
+
+    let liquidityTokenVault <- BltUsdtSwapPair.mintTokens(amount: (BltUsdtSwapPair.totalSupply * liquidityPercentage) / 10000.0)
 
     destroy from
     return <- liquidityTokenVault
   }
 
-  access(contract) fun removeLiquidity(from: @BltUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @BltUsdtSwapPair.TokenBundle {
+  access(contract) fun removeLiquidity(from: @BltUsdtSwapPair.Vault): @BltUsdtSwapPair.TokenBundle {
     pre {
       from.balance > UFix64(0): "Empty liquidity token vault"
       from.balance < BltUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
-      from.balance == token1Amount + token2Amount: "Incorrect withdrawal amounts"
     }
+
+    // shift decimal 4 places to avoid truncation error
+    let liquidityPercentage = (from.balance * 10000.0) / BltUsdtSwapPair.totalSupply
+
+    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
 
     // Burn liquidity tokens and withdraw
     BltUsdtSwapPair.burnTokens(from: <- from)
 
-    let token1Vault <- BltUsdtSwapPair.token1Vault.withdraw(amount: token1Amount) as! @BloctoToken.Vault
-    let token2Vault <- BltUsdtSwapPair.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault
+    let token1Vault <- BltUsdtSwapPair.token1Vault.withdraw(amount: (BltUsdtSwapPair.token1Vault.balance * liquidityPercentage) / 10000.0) as! @BloctoToken.Vault
+    let token2Vault <- BltUsdtSwapPair.token2Vault.withdraw(amount: (BltUsdtSwapPair.token2Vault.balance * liquidityPercentage) / 10000.0) as! @TeleportedTetherToken.Vault
 
     let tokenBundle <- BltUsdtSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
     return <- tokenBundle
