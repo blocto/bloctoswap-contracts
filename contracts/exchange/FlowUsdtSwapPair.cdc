@@ -227,7 +227,7 @@ pub contract FlowSwapPair: FungibleToken {
       FlowSwapPair.isFrozen = false
     }
 
-    pub fun setProxyOnly(proxyOnly: Boolean) {
+    pub fun setProxyOnly(proxyOnly: Bool) {
       FlowSwapPair.account.load<Bool>(from: /storage/proxyOnly)
       FlowSwapPair.account.save(proxyOnly, to: /storage/proxyOnly)
     }

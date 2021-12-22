@@ -227,7 +227,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
       BltUsdtSwapPair.isFrozen = false
     }
 
-    pub fun setProxyOnly(proxyOnly: Boolean) {
+    pub fun setProxyOnly(proxyOnly: Bool) {
       BltUsdtSwapPair.account.load<Bool>(from: /storage/proxyOnly)
       BltUsdtSwapPair.account.save(proxyOnly, to: /storage/proxyOnly)
     }
@@ -351,7 +351,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
       !BltUsdtSwapPair.proxyOnly(): "BltUsdtSwapPair is proxyOnly"
     }
 
-    return <- FlowSwapPair._swapToken1ForToken2(from: <-from)
+    return <- BltUsdtSwapPair._swapToken1ForToken2(from: <-from)
   }
 
   // Swap Token2 (tUSDT) -> Token1 (BLT)

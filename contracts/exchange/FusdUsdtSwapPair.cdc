@@ -258,7 +258,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
       FusdUsdtSwapPair.isFrozen = false
     }
 
-    pub fun setProxyOnly(proxyOnly: Boolean) {
+    pub fun setProxyOnly(proxyOnly: Bool) {
       FusdUsdtSwapPair.account.load<Bool>(from: /storage/proxyOnly)
       FusdUsdtSwapPair.account.save(proxyOnly, to: /storage/proxyOnly)
     }
@@ -463,12 +463,12 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     return <- tokenBundle
   }
 
-  pub fun removeLiquidity(from: @FusdUsdtSwapPair.Vault): @FusdUsdtSwapPair.TokenBundle {
+  pub fun removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
     pre {
       !FusdUsdtSwapPair.proxyOnly(): "FusdUsdtSwapPair is proxyOnly"
     }
 
-    return <- FusdUsdtSwapPair._removeLiquidity(from: <-from)
+    return <- FusdUsdtSwapPair._removeLiquidity(from: <-from, token1Amount: token1Amount, token2Amount: token2Amount)
   }
 
   init() {
