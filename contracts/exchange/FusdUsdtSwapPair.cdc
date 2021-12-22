@@ -196,19 +196,19 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
   pub resource SwapProxy {
     pub fun swapToken1ForToken2(from: @FUSD.Vault): @TeleportedTetherToken.Vault {
-      return <- FusdUsdtSwapPair.swapToken1ForToken2(from: <-from)
+      return <- FusdUsdtSwapPair._swapToken1ForToken2(from: <-from)
     }
 
     pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
-      return <- FusdUsdtSwapPair.swapToken2ForToken1(from: <-from)
+      return <- FusdUsdtSwapPair._swapToken2ForToken1(from: <-from)
     }
 
     pub fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
-      return <- FusdUsdtSwapPair.addLiquidity(from: <-from)
+      return <- FusdUsdtSwapPair._addLiquidity(from: <-from)
     }
 
     pub fun removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
-      return <- FusdUsdtSwapPair.removeLiquidity(from: <-from, token1Amount: token1Amount, token2Amount: token2Amount)
+      return <- FusdUsdtSwapPair._removeLiquidity(from: <-from, token1Amount: token1Amount, token2Amount: token2Amount)
     }
   }
 
@@ -258,6 +258,11 @@ pub contract FusdUsdtSwapPair: FungibleToken {
       FusdUsdtSwapPair.isFrozen = false
     }
 
+    pub fun setProxyOnly(proxyOnly: Boolean) {
+      FusdUsdtSwapPair.account.load<Bool>(from: /storage/proxyOnly)
+      FusdUsdtSwapPair.account.save(proxyOnly, to: /storage/proxyOnly)
+    }
+
     pub fun createSwapProxy(): @FusdUsdtSwapPair.SwapProxy {
       return <- create FusdUsdtSwapPair.SwapProxy()
     }
@@ -271,6 +276,10 @@ pub contract FusdUsdtSwapPair: FungibleToken {
       self.token1Amount = token1Amount
       self.token2Amount = token2Amount
     }
+  }
+
+  pub fun proxyOnly(): Bool {
+    return self.account.copy<Bool>(from: /storage/proxyOnly) ?? false
   }
 
   // Check current pool amounts
@@ -319,7 +328,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   }
 
   // Swaps Token1 (FUSD) -> Token2 (tUSDT)
-  access(contract) fun swapToken1ForToken2(from: @FUSD.Vault): @TeleportedTetherToken.Vault {
+  access(contract) fun _swapToken1ForToken2(from: @FUSD.Vault): @TeleportedTetherToken.Vault {
     pre {
       !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
@@ -338,8 +347,16 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
   }
 
+  pub fun swapToken1ForToken2(from: @FUSD.Vault): @TeleportedTetherToken.Vault {
+    pre {
+      !FusdUsdtSwapPair.proxyOnly(): "FusdUsdtSwapPair is proxyOnly"
+    }
+
+    return <- FusdUsdtSwapPair._swapToken1ForToken2(from: <-from)
+  }
+
   // Swap Token2 (tUSDT) -> Token1 (FUSD)
-  access(contract) fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
+  access(contract) fun _swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
     pre {
       !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
       from.balance > UFix64(0): "Empty token vault"
@@ -356,6 +373,14 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
 
     return <- (self.token1Vault.withdraw(amount: token1Amount) as! @FUSD.Vault)
+  }
+
+  pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
+    pre {
+      !FusdUsdtSwapPair.proxyOnly(): "FusdUsdtSwapPair is proxyOnly"
+    }
+
+    return <- FusdUsdtSwapPair._swapToken2ForToken1(from: <-from)
   }
 
   // Used to add liquidity without minting new liquidity token
@@ -391,7 +416,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     return <- FusdUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
   }
 
-  access(contract) fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
+  access(contract) fun _addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
     pre {
       self.totalSupply > UFix64(0): "Pair must be initialized first"
     }
@@ -413,7 +438,15 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     return <- liquidityTokenVault
   }
 
-  access(contract) fun removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
+  pub fun addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
+    pre {
+      !FusdUsdtSwapPair.proxyOnly(): "FusdUsdtSwapPair is proxyOnly"
+    }
+
+    return <- FusdUsdtSwapPair._addLiquidity(from: <-from)
+  }
+
+  access(contract) fun _removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
     pre {
       from.balance > UFix64(0): "Empty liquidity token vault"
       from.balance < FusdUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
@@ -428,6 +461,14 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
     let tokenBundle <- FusdUsdtSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
     return <- tokenBundle
+  }
+
+  pub fun removeLiquidity(from: @FusdUsdtSwapPair.Vault): @FusdUsdtSwapPair.TokenBundle {
+    pre {
+      !FusdUsdtSwapPair.proxyOnly(): "FusdUsdtSwapPair is proxyOnly"
+    }
+
+    return <- FusdUsdtSwapPair._removeLiquidity(from: <-from)
   }
 
   init() {
