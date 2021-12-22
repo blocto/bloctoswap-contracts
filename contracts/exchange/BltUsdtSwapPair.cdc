@@ -1,5 +1,5 @@
 import FungibleToken from 0xFUNGIBLETOKENADDRESS
-import BloctoToken from 0xBLTADDRESS
+import BloctoToken from 0xBLOCTOTOKENADDRESS
 import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
 
 // Exchange pair between BloctoToken and TeleportedTetherToken
@@ -275,6 +275,10 @@ pub contract BltUsdtSwapPair: FungibleToken {
 
   pub fun proxyOnly(): Bool {
     return self.account.copy<Bool>(from: /storage/proxyOnly) ?? false
+  }
+
+  pub fun getFeePercentage(): UFix64 {
+    return self.feePercentage
   }
 
   // Check current pool amounts

@@ -282,6 +282,10 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     return self.account.copy<Bool>(from: /storage/proxyOnly) ?? false
   }
 
+  pub fun getFeePercentage(): UFix64 {
+    return 0.0
+  }
+
   // Check current pool amounts
   pub fun getPoolAmounts(): PoolAmounts {
     return PoolAmounts(token1Amount: FusdUsdtSwapPair.token1Vault.balance, token2Amount: FusdUsdtSwapPair.token2Vault.balance)
