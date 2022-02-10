@@ -6,3 +6,6 @@
 # Built artifacts
 build/
 node_modules/
+
+# Secrets
+flow.testnet.json

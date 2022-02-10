@@ -60,34 +60,10 @@
       "chain": "flow-emulator"
     },
 		"usdc-admin-testnet": {
-      "address": "0x481744401ea249c0",
-      "keys": [
-        {
-          "type": "hex",
-          "index": 0,
-          "signatureAlgorithm": "ECDSA_secp256k1",
-          "hashAlgorithm": "SHA3_256",
-          "context": {
-            "privateKey": "0ae35ae3c977127cf567700ef64d4a868e823ccc7b89e9383c5eee26c5d7738b"
-          }
-        }
-      ],
-      "chain": "flow-testnet"
+      "fromFile": "./flow.testnet.json"
     },
 		"usdc-usdt-swap-admin-testnet": {
-      "address": "0xd017f81bffc9aa05",
-      "keys": [
-        {
-          "type": "hex",
-          "index": 0,
-          "signatureAlgorithm": "ECDSA_secp256k1",
-          "hashAlgorithm": "SHA3_256",
-          "context": {
-            "privateKey": "3403d7df4ffcada24ccda1d5607f8da9b757672651b924f9077cb1e27d77499a"
-          }
-        }
-      ],
-      "chain": "flow-testnet"
+      "fromFile": "./flow.testnet.json"
     }
 	},
   "deployments": {

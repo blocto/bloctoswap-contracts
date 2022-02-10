@@ -2,8 +2,8 @@
 // to add a Vault resource to their account
 // so that they can use the teleportedTetherToken (USDT)
 
-import FungibleToken from 0xFUNGIBLETOKENADDRESS
-import TeleportedTetherToken from 0xTOKENADDRESS
+import FungibleToken from "../../contracts/token/FungibleToken.cdc"
+import TeleportedTetherToken from "../../contracts/token/TeleportedTetherToken.cdc"
 
 transaction {
 
