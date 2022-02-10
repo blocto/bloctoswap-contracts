@@ -1,10 +1,79 @@
 {
-	"accounts": {
-		"service": {
-			"address": "f086a545ce3c552d",
-			"privateKey": "dcc3a1c64beb8f8f4b5f63cd56804d3b8234a6d29da7c0b5ed2a0e82c076b8e0",
-			"sigAlgorithm": "ECDSA_P256",
-			"hashAlgorithm": "SHA3_256"
+	"emulators": {
+		"default": {
+			"port": 3569,
+			"serviceAccount": "emulator-account"
 		}
-	}
+	},
+	"contracts": {
+		"FungibleToken": {
+      "source": "./contracts/token/FungibleToken.cdc",
+      "aliases": {
+        "emulator": "0xee82856bf20e2aa6",
+        "testnet": "0x9a0766d93b6608b7",
+        "mainnet": "0xf233dcee88fe0abe"
+      }
+    },
+    "FlowToken": {
+      "source": "./contracts/token/FlowToken.cdc",
+      "aliases": {
+        "testnet": "0x7e60df042a9c0868",
+        "mainnet": "0x1654653399040a61"
+      }
+    },
+		"FiatToken": {
+      "source": "./contracts/token/FiatToken.cdc",
+      "aliases": {
+        "mainnet": "0xb19436aae4d94622"
+      }
+    },
+		"FUSD": {
+      "source": "./contracts/token/FUSD.cdc",
+      "aliases": {
+        "testnet": "0xe223d8a629e49c68",
+        "mainnet": "0x3c5959b568896393"
+      }
+    },
+    "TeleportedTetherToken": {
+      "source": "./contracts/token/TeleportedTetherToken.cdc",
+      "aliases": {
+        "testnet": "0xab26e0a07d770ec1",
+        "mainnet": "0xcfdd90d4a00f7b5b"
+      }
+    }
+	},
+	"networks": {
+		"emulator": "127.0.0.1:3569",
+		"mainnet": "access.mainnet.nodes.onflow.org:9000",
+		"testnet": "access.devnet.nodes.onflow.org:9000"
+	},
+	"accounts": {
+		"emulator-account": {
+      "address": "f8d6e0586b0a20c7",
+      "keys": "eb4347b08ebd2f74d38bec1026b07430fe04510c95afe8534735677a3410dd87",
+      "chain": "flow-emulator"
+    },
+		"usdc-admin-testnet": {
+      "address": "0x481744401ea249c0",
+      "keys": [
+        {
+          "type": "hex",
+          "index": 0,
+          "signatureAlgorithm": "ECDSA_secp256k1",
+          "hashAlgorithm": "SHA3_256",
+          "context": {
+            "privateKey": "0ae35ae3c977127cf567700ef64d4a868e823ccc7b89e9383c5eee26c5d7738b"
+          }
+        }
+      ],
+      "chain": "flow-testnet"
+    }
+	},
+  "deployments": {
+    "testnet": {
+      "usdc-admin-testnet": [
+        "FiatToken"
+      ]
+    }
+  }
 }
