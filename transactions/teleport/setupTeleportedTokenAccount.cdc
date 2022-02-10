@@ -1,6 +1,6 @@
 // This transaction is a template for a transaction
 // to add a Vault resource to their account
-// so that they can use the teleportedTetherToken (USDT)
+// so that they can use the TeleportedTetherToken (USDT)
 
 import FungibleToken from "../../contracts/token/FungibleToken.cdc"
 import TeleportedTetherToken from "../../contracts/token/TeleportedTetherToken.cdc"

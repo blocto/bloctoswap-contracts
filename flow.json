@@ -34,6 +34,19 @@
         "mainnet": "0x3c5959b568896393"
       }
     },
+		"REVV": {
+			"source": "./contracts/token/REVV.cdc",
+			"aliases": {
+				"testnet": "0x14ca72fa4d45d2c3",
+				"mainnet": "0xd01e482eb680ec9f"
+			}
+		},
+		"RevvFlowSwapPair": {
+			"source": "./contracts/exchange/RevvFlowSwapPair.cdc",
+			"aliases": {
+				"mainnet": "0xd01e482eb680ec9f"
+			}
+		},
     "TeleportedTetherToken": {
       "source": "./contracts/token/TeleportedTetherToken.cdc",
       "aliases": {
@@ -62,7 +75,7 @@
 		"usdc-admin-testnet": {
       "fromFile": "./flow.testnet.json"
     },
-		"usdc-usdt-swap-admin-testnet": {
+		"swap-admin-testnet": {
       "fromFile": "./flow.testnet.json"
     }
 	},
@@ -71,8 +84,9 @@
       "usdc-admin-testnet": [
         "FiatToken"
       ],
-			"usdc-usdt-swap-admin-testnet": [
-				"UsdcUsdtSwapPair"
+			"swap-admin-testnet": [
+				"UsdcUsdtSwapPair",
+				"RevvFlowSwapPair"
 			]
     }
   }
