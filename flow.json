@@ -40,7 +40,13 @@
         "testnet": "0xab26e0a07d770ec1",
         "mainnet": "0xcfdd90d4a00f7b5b"
       }
-    }
+    },
+		"UsdcUsdtSwapPair": {
+			"source": "./contracts/exchange/UsdcUsdtSwapPair.cdc",
+      "aliases": {
+        "mainnet": "0xcfdd90d4a00f7b5b"
+      }
+		}
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
@@ -67,13 +73,31 @@
         }
       ],
       "chain": "flow-testnet"
+    },
+		"usdc-usdt-swap-admin-testnet": {
+      "address": "0xd017f81bffc9aa05",
+      "keys": [
+        {
+          "type": "hex",
+          "index": 0,
+          "signatureAlgorithm": "ECDSA_secp256k1",
+          "hashAlgorithm": "SHA3_256",
+          "context": {
+            "privateKey": "3403d7df4ffcada24ccda1d5607f8da9b757672651b924f9077cb1e27d77499a"
+          }
+        }
+      ],
+      "chain": "flow-testnet"
     }
 	},
   "deployments": {
     "testnet": {
       "usdc-admin-testnet": [
         "FiatToken"
-      ]
+      ],
+			"usdc-usdt-swap-admin-testnet": [
+				"UsdcUsdtSwapPair"
+			]
     }
   }
 }
