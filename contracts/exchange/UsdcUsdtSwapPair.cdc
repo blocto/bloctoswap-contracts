@@ -318,10 +318,9 @@ pub contract UsdcUsdtSwapPair: FungibleToken {
     let token1Vault <- from.withdrawToken1()
     let token2Vault <- from.withdrawToken2()
 
-    assert(token1Vault.balance > 0.0, message: "Empty token1 vault")
-    assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
-
     let totalLiquidityAmount = token1Vault.balance + token2Vault.balance
+
+    assert(totalLiquidityAmount > 0.0, message: "Empty liquidity vaults")
 
     self.token1Vault.deposit(from: <- token1Vault)
     self.token2Vault.deposit(from: <- token2Vault)
