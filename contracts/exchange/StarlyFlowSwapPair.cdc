@@ -5,11 +5,11 @@ import FlowToken from "../token/FlowToken.cdc"
 // Exchange pair between StarlyToken and FlowToken
 // Token1: StarlyToken
 // Token2: FlowToken
-pub contract StarlyTokenFlowSwapPair: FungibleToken {
+pub contract StarlyFlowSwapPair: FungibleToken {
   // Frozen flag controlled by Admin
   pub var isFrozen: Bool
   
-  // Total supply of StarlyTokenFlowSwapPair liquidity token in existence
+  // Total supply of StarlyFlowSwapPair liquidity token in existence
   pub var totalSupply: UFix64
 
   // Fee charged when performing token swap
@@ -57,7 +57,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
   //
   // Each user stores an instance of only the Vault in their storage
   // The functions in the Vault and governed by the pre and post conditions
-  // in StarlyTokenFlowSwapPair when they are called.
+  // in StarlyFlowSwapPair when they are called.
   // The checks happen at runtime whenever a function is called.
   //
   // Resources can only be created in the context of the contract that they
@@ -98,7 +98,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
     // was a temporary holder of the tokens. The Vault's balance has
     // been consumed and therefore can be destroyed.
     pub fun deposit(from: @FungibleToken.Vault) {
-      let vault <- from as! @StarlyTokenFlowSwapPair.Vault
+      let vault <- from as! @StarlyFlowSwapPair.Vault
       self.balance = self.balance + vault.balance
       emit TokensDeposited(amount: vault.balance, to: self.owner?.address)
       vault.balance = 0.0
@@ -106,7 +106,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
     }
 
     destroy() {
-      StarlyTokenFlowSwapPair.totalSupply = StarlyTokenFlowSwapPair.totalSupply - self.balance
+      StarlyFlowSwapPair.totalSupply = StarlyFlowSwapPair.totalSupply - self.balance
     }
   }
 
@@ -159,7 +159,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
 
   // createEmptyBundle
   //
-  pub fun createEmptyTokenBundle(): @StarlyTokenFlowSwapPair.TokenBundle {
+  pub fun createEmptyTokenBundle(): @StarlyFlowSwapPair.TokenBundle {
     return <- create TokenBundle(
       fromToken1: <- (StarlyToken.createEmptyVault() as! @StarlyToken.Vault),
       fromToken2: <- (FlowToken.createEmptyVault() as! @FlowToken.Vault)
@@ -168,7 +168,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
 
   // createTokenBundle
   //
-  pub fun createTokenBundle(fromToken1: @StarlyToken.Vault, fromToken2: @FlowToken.Vault): @StarlyTokenFlowSwapPair.TokenBundle {
+  pub fun createTokenBundle(fromToken1: @StarlyToken.Vault, fromToken2: @FlowToken.Vault): @StarlyFlowSwapPair.TokenBundle {
     return <- create TokenBundle(fromToken1: <- fromToken1, fromToken2: <- fromToken2)
   }
 
@@ -177,11 +177,11 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
   // Function that mints new tokens, adds them to the total supply,
   // and returns them to the calling context.
   //
-  access(contract) fun mintTokens(amount: UFix64): @StarlyTokenFlowSwapPair.Vault {
+  access(contract) fun mintTokens(amount: UFix64): @StarlyFlowSwapPair.Vault {
     pre {
       amount > 0.0: "Amount minted must be greater than zero"
     }
-    StarlyTokenFlowSwapPair.totalSupply = StarlyTokenFlowSwapPair.totalSupply + amount
+    StarlyFlowSwapPair.totalSupply = StarlyFlowSwapPair.totalSupply + amount
     emit TokensMinted(amount: amount)
     return <-create Vault(balance: amount)
   }
@@ -193,8 +193,8 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
   // Note: the burned tokens are automatically subtracted from the 
   // total supply in the Vault destructor.
   //
-  access(contract) fun burnTokens(from: @StarlyTokenFlowSwapPair.Vault) {
-    let vault <- from as! @StarlyTokenFlowSwapPair.Vault
+  access(contract) fun burnTokens(from: @StarlyFlowSwapPair.Vault) {
+    let vault <- from as! @StarlyFlowSwapPair.Vault
     let amount = vault.balance
     destroy vault
     emit TokensBurned(amount: amount)
@@ -202,16 +202,16 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
 
   pub resource Admin {
     pub fun freeze() {
-      StarlyTokenFlowSwapPair.isFrozen = true
+      StarlyFlowSwapPair.isFrozen = true
     }
 
     pub fun unfreeze() {
-      StarlyTokenFlowSwapPair.isFrozen = false
+      StarlyFlowSwapPair.isFrozen = false
     }
 
-    pub fun addInitialLiquidity(from: @StarlyTokenFlowSwapPair.TokenBundle): @StarlyTokenFlowSwapPair.Vault {
+    pub fun addInitialLiquidity(from: @StarlyFlowSwapPair.TokenBundle): @StarlyFlowSwapPair.Vault {
       pre {
-        StarlyTokenFlowSwapPair.totalSupply == 0.0: "Pair already initialized"
+        StarlyFlowSwapPair.totalSupply == 0.0: "Pair already initialized"
       }
 
       let token1Vault <- from.withdrawToken1()
@@ -220,17 +220,17 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
       assert(token1Vault.balance > 0.0, message: "Empty token1 vault")
       assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
 
-      StarlyTokenFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
-      StarlyTokenFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
+      StarlyFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
+      StarlyFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
 
       destroy from
 
       // Create initial tokens
-      return <- StarlyTokenFlowSwapPair.mintTokens(amount: 1.0)
+      return <- StarlyFlowSwapPair.mintTokens(amount: 1.0)
     }
 
     pub fun updateFeePercentage(feePercentage: UFix64) {
-      StarlyTokenFlowSwapPair.feePercentage = feePercentage
+      StarlyFlowSwapPair.feePercentage = feePercentage
 
       emit FeeUpdated(feePercentage: feePercentage)
     }
@@ -252,7 +252,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
 
   // Check current pool amounts
   pub fun getPoolAmounts(): PoolAmounts {
-    return PoolAmounts(token1Amount: StarlyTokenFlowSwapPair.token1Vault.balance, token2Amount: StarlyTokenFlowSwapPair.token2Vault.balance)
+    return PoolAmounts(token1Amount: StarlyFlowSwapPair.token1Vault.balance, token2Amount: StarlyFlowSwapPair.token2Vault.balance)
   }
 
   // Get quote for Token1 (given) -> Token2
@@ -302,7 +302,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
   // Swaps Token1 (STARLY) -> Token2 (FLOW)
   access(contract) fun _swapToken1ForToken2(from: @StarlyToken.Vault): @FlowToken.Vault {
     pre {
-      !StarlyTokenFlowSwapPair.isFrozen: "StarlyTokenFlowSwapPair is frozen"
+      !StarlyFlowSwapPair.isFrozen: "StarlyFlowSwapPair is frozen"
       from.balance > 0.0: "Empty token vault"
     }
 
@@ -320,13 +320,13 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
   }
 
   pub fun swapToken1ForToken2(from: @StarlyToken.Vault): @FlowToken.Vault {
-    return <- StarlyTokenFlowSwapPair._swapToken1ForToken2(from: <-from)
+    return <- StarlyFlowSwapPair._swapToken1ForToken2(from: <-from)
   }
 
   // Swap Token2 (FLOW) -> Token1 (STARLY)
   access(contract) fun _swapToken2ForToken1(from: @FlowToken.Vault): @StarlyToken.Vault {
     pre {
-      !StarlyTokenFlowSwapPair.isFrozen: "StarlyTokenFlowSwapPair is frozen"
+      !StarlyFlowSwapPair.isFrozen: "StarlyFlowSwapPair is frozen"
       from.balance > 0.0: "Empty token vault"
     }
 
@@ -344,21 +344,21 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
   }
 
   pub fun swapToken2ForToken1(from: @FlowToken.Vault): @StarlyToken.Vault {
-    return <- StarlyTokenFlowSwapPair._swapToken2ForToken1(from: <-from)
+    return <- StarlyFlowSwapPair._swapToken2ForToken1(from: <-from)
   }
 
   // Used to add liquidity without minting new liquidity token
-  pub fun donateLiquidity(from: @StarlyTokenFlowSwapPair.TokenBundle) {
+  pub fun donateLiquidity(from: @StarlyFlowSwapPair.TokenBundle) {
     let token1Vault <- from.withdrawToken1()
     let token2Vault <- from.withdrawToken2()
 
-    StarlyTokenFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
-    StarlyTokenFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
+    StarlyFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
+    StarlyFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
 
     destroy from
   }
 
-  access(contract) fun _addLiquidity(from: @StarlyTokenFlowSwapPair.TokenBundle): @StarlyTokenFlowSwapPair.Vault {
+  access(contract) fun _addLiquidity(from: @StarlyFlowSwapPair.TokenBundle): @StarlyFlowSwapPair.Vault {
     pre {
       self.totalSupply > 0.0: "Pair must be initialized by admin first"
     }
@@ -370,8 +370,8 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
     assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
 
     // shift decimal 4 places to avoid truncation error
-    let token1Percentage: UFix64 = (token1Vault.balance * 10000.0) / StarlyTokenFlowSwapPair.token1Vault.balance
-    let token2Percentage: UFix64 = (token2Vault.balance * 10000.0) / StarlyTokenFlowSwapPair.token2Vault.balance
+    let token1Percentage: UFix64 = (token1Vault.balance * 10000.0) / StarlyFlowSwapPair.token1Vault.balance
+    let token2Percentage: UFix64 = (token2Vault.balance * 10000.0) / StarlyFlowSwapPair.token2Vault.balance
 
     // final liquidity token minted is the smaller between token1Liquidity and token2Liquidity
     // to maximize profit, user should add liquidity propotional to current liquidity
@@ -379,42 +379,42 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
 
     assert(liquidityPercentage > 0.0, message: "Liquidity too small")
 
-    StarlyTokenFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
-    StarlyTokenFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
+    StarlyFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
+    StarlyFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
 
-    let liquidityTokenVault <- StarlyTokenFlowSwapPair.mintTokens(amount: (StarlyTokenFlowSwapPair.totalSupply * liquidityPercentage) / 10000.0)
+    let liquidityTokenVault <- StarlyFlowSwapPair.mintTokens(amount: (StarlyFlowSwapPair.totalSupply * liquidityPercentage) / 10000.0)
 
     destroy from
     return <- liquidityTokenVault
   }
 
-  pub fun addLiquidity(from: @StarlyTokenFlowSwapPair.TokenBundle): @StarlyTokenFlowSwapPair.Vault {
-    return <- StarlyTokenFlowSwapPair._addLiquidity(from: <-from)
+  pub fun addLiquidity(from: @StarlyFlowSwapPair.TokenBundle): @StarlyFlowSwapPair.Vault {
+    return <- StarlyFlowSwapPair._addLiquidity(from: <-from)
   }
 
-  access(contract) fun _removeLiquidity(from: @StarlyTokenFlowSwapPair.Vault): @StarlyTokenFlowSwapPair.TokenBundle {
+  access(contract) fun _removeLiquidity(from: @StarlyFlowSwapPair.Vault): @StarlyFlowSwapPair.TokenBundle {
     pre {
       from.balance > 0.0: "Empty liquidity token vault"
-      from.balance < StarlyTokenFlowSwapPair.totalSupply: "Cannot remove all liquidity"
+      from.balance < StarlyFlowSwapPair.totalSupply: "Cannot remove all liquidity"
     }
 
     // shift decimal 4 places to avoid truncation error
-    let liquidityPercentage = (from.balance * 10000.0) / StarlyTokenFlowSwapPair.totalSupply
+    let liquidityPercentage = (from.balance * 10000.0) / StarlyFlowSwapPair.totalSupply
 
     assert(liquidityPercentage > 0.0, message: "Liquidity too small")
 
     // Burn liquidity tokens and withdraw
-    StarlyTokenFlowSwapPair.burnTokens(from: <- from)
+    StarlyFlowSwapPair.burnTokens(from: <- from)
 
-    let token1Vault <- StarlyTokenFlowSwapPair.token1Vault.withdraw(amount: (StarlyTokenFlowSwapPair.token1Vault.balance * liquidityPercentage) / 10000.0) as! @StarlyToken.Vault
-    let token2Vault <- StarlyTokenFlowSwapPair.token2Vault.withdraw(amount: (StarlyTokenFlowSwapPair.token2Vault.balance * liquidityPercentage) / 10000.0) as! @FlowToken.Vault
+    let token1Vault <- StarlyFlowSwapPair.token1Vault.withdraw(amount: (StarlyFlowSwapPair.token1Vault.balance * liquidityPercentage) / 10000.0) as! @StarlyToken.Vault
+    let token2Vault <- StarlyFlowSwapPair.token2Vault.withdraw(amount: (StarlyFlowSwapPair.token2Vault.balance * liquidityPercentage) / 10000.0) as! @FlowToken.Vault
 
-    let tokenBundle <- StarlyTokenFlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
+    let tokenBundle <- StarlyFlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
     return <- tokenBundle
   }
 
-  pub fun removeLiquidity(from: @StarlyTokenFlowSwapPair.Vault): @StarlyTokenFlowSwapPair.TokenBundle {
-    return <- StarlyTokenFlowSwapPair._removeLiquidity(from: <-from)
+  pub fun removeLiquidity(from: @StarlyFlowSwapPair.Vault): @StarlyFlowSwapPair.TokenBundle {
+    return <- StarlyFlowSwapPair._removeLiquidity(from: <-from)
   }
 
   init() {

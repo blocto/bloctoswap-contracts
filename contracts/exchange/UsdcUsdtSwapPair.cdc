@@ -264,7 +264,7 @@ pub contract UsdcUsdtSwapPair: FungibleToken {
   }
 
   // Swaps Token1 (FiatToken) -> Token2 (tUSDT)
-  access(contract) fun _swapToken1ForToken2(from: @FiatToken.Vault): @TeleportedTetherToken.Vault {
+  pub fun swapToken1ForToken2(from: @FiatToken.Vault): @TeleportedTetherToken.Vault {
     pre {
       !UsdcUsdtSwapPair.isFrozen: "UsdcUsdtSwapPair is frozen"
       from.balance > 0.0: "Empty token vault"
@@ -283,12 +283,8 @@ pub contract UsdcUsdtSwapPair: FungibleToken {
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
   }
 
-  pub fun swapToken1ForToken2(from: @FiatToken.Vault): @TeleportedTetherToken.Vault {
-    return <- UsdcUsdtSwapPair._swapToken1ForToken2(from: <-from)
-  }
-
   // Swap Token2 (tUSDT) -> Token1 (FiatToken)
-  access(contract) fun _swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FiatToken.Vault {
+  pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FiatToken.Vault {
     pre {
       !UsdcUsdtSwapPair.isFrozen: "UsdcUsdtSwapPair is frozen"
       from.balance > 0.0: "Empty token vault"
@@ -307,10 +303,6 @@ pub contract UsdcUsdtSwapPair: FungibleToken {
     return <- (self.token1Vault.withdraw(amount: token1Amount) as! @FiatToken.Vault)
   }
 
-  pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FiatToken.Vault {
-    return <- UsdcUsdtSwapPair._swapToken2ForToken1(from: <-from)
-  }
-
   // Used to add liquidity without minting new liquidity token
   pub fun donateLiquidity(from: @UsdcUsdtSwapPair.TokenBundle) {
     let token1Vault <- from.withdrawToken1()
@@ -322,11 +314,7 @@ pub contract UsdcUsdtSwapPair: FungibleToken {
     destroy from
   }
 
-  pub fun addInitialLiquidity(from: @UsdcUsdtSwapPair.TokenBundle): @UsdcUsdtSwapPair.Vault {
-    pre {
-      self.totalSupply == 0.0: "Pair already initialized"
-    }
-
+  pub fun addLiquidity(from: @UsdcUsdtSwapPair.TokenBundle): @UsdcUsdtSwapPair.Vault {
     let token1Vault <- from.withdrawToken1()
     let token2Vault <- from.withdrawToken2()
 
@@ -340,37 +328,10 @@ pub contract UsdcUsdtSwapPair: FungibleToken {
 
     destroy from
 
-    // Create initial tokens
     return <- UsdcUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
   }
 
-  access(contract) fun _addLiquidity(from: @UsdcUsdtSwapPair.TokenBundle): @UsdcUsdtSwapPair.Vault {
-    pre {
-      self.totalSupply > 0.0: "Pair must be initialized first"
-    }
-
-    let token1Vault <- from.withdrawToken1()
-    let token2Vault <- from.withdrawToken2()
-
-    assert(token1Vault.balance > 0.0, message: "Empty token1 vault")
-    assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
-
-    let totalLiquidityAmount = token1Vault.balance + token2Vault.balance
-
-    self.token1Vault.deposit(from: <- token1Vault)
-    self.token2Vault.deposit(from: <- token2Vault)
-
-    let liquidityTokenVault <- UsdcUsdtSwapPair.mintTokens(amount: totalLiquidityAmount)
-
-    destroy from
-    return <- liquidityTokenVault
-  }
-
-  pub fun addLiquidity(from: @UsdcUsdtSwapPair.TokenBundle): @UsdcUsdtSwapPair.Vault {
-    return <- UsdcUsdtSwapPair._addLiquidity(from: <-from)
-  }
-
-  access(contract) fun _removeLiquidity(from: @UsdcUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @UsdcUsdtSwapPair.TokenBundle {
+  pub fun removeLiquidity(from: @UsdcUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @UsdcUsdtSwapPair.TokenBundle {
     pre {
       from.balance > 0.0: "Empty liquidity token vault"
       from.balance < UsdcUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
@@ -385,10 +346,6 @@ pub contract UsdcUsdtSwapPair: FungibleToken {
 
     let tokenBundle <- UsdcUsdtSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
     return <- tokenBundle
-  }
-
-  pub fun removeLiquidity(from: @UsdcUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @UsdcUsdtSwapPair.TokenBundle {
-    return <- UsdcUsdtSwapPair._removeLiquidity(from: <-from, token1Amount: token1Amount, token2Amount: token2Amount)
   }
 
   init() {

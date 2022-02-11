@@ -11,7 +11,7 @@ transaction(token1Amount: UFix64, token2Amount: UFix64) {
   // The Vault reference for liquidity tokens
   let liquidityTokenRef: &UsdcUsdtSwapPair.Vault
 
-  prepare(signer: AuthAccount, proxyHolder: AuthAccount) {
+  prepare(signer: AuthAccount) {
     self.usdcVault = signer.borrow<&FiatToken.Vault>(from: FiatToken.VaultStoragePath)
         ?? panic("Could not borrow a reference to Vault")
 
