@@ -47,6 +47,19 @@
 				"mainnet": "0xd01e482eb680ec9f"
 			}
 		},
+    "StarlyFlowSwapPair": {
+			"source": "./contracts/exchange/StarlyFlowSwapPair.cdc",
+			"aliases": {
+				"mainnet": "0xd01e482eb680ec9f"
+			}
+		},
+    "StarlyToken": {
+      "source": "./contracts/token/StarlyToken.cdc",
+      "aliases": {
+        "testnet": "0xf63219072aaddd50",
+        "mainnet": "0x142fa6570b62fd97"
+      }
+    },
     "TeleportedTetherToken": {
       "source": "./contracts/token/TeleportedTetherToken.cdc",
       "aliases": {
@@ -86,7 +99,8 @@
       ],
 			"swap-admin-testnet": [
 				"UsdcUsdtSwapPair",
-				"RevvFlowSwapPair"
+				"RevvFlowSwapPair",
+        "StarlyFlowSwapPair"
 			]
     }
   }
