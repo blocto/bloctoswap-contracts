@@ -19,7 +19,7 @@ transaction(token1Amount: UFix64, token2Amount: UFix64) {
         ?? panic("Could not borrow a reference to Vault")
 
     if signer.borrow<&UsdcUsdtSwapPair.Vault>(from: UsdcUsdtSwapPair.TokenStoragePath) == nil {
-      // Create a new flowToken Vault and put it in storage
+      // Create a new UsdcUsdtSwapPair LP Token Vault and put it in storage
       signer.save(<-UsdcUsdtSwapPair.createEmptyVault(), to: UsdcUsdtSwapPair.TokenStoragePath)
 
       // Create a public capability to the Vault that only exposes

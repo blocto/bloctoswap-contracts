@@ -12,13 +12,10 @@ transaction(amount: UFix64, token1Amount: UFix64, token2Amount: UFix64) {
   let tetherVaultRef: &TeleportedTetherToken.Vault
 
   prepare(signer: AuthAccount) {
-    assert(amount == token1Amount + token2Amount: "Incosistent liquidtiy amounts")
+    assert(amount == token1Amount + token2Amount, message: "Incosistent liquidtiy amounts")
 
     self.liquidityTokenRef = signer.borrow<&UsdcUsdtSwapPair.Vault>(from: UsdcUsdtSwapPair.TokenStoragePath)
       ?? panic("Could not borrow a reference to Vault")
-
-    self.swapProxyRef = proxyHolder.borrow<&UsdcUsdtSwapPair.SwapProxy>(from: /storage/usdcUsdtSwapProxy)
-      ?? panic("Could not borrow a reference to proxy holder")
 
     self.usdcVaultRef = signer.borrow<&FiatToken.Vault>(from: /storage/usdcVault)
       ?? panic("Could not borrow a reference to Vault")
@@ -32,7 +29,7 @@ transaction(amount: UFix64, token1Amount: UFix64, token2Amount: UFix64) {
     let liquidityTokenVault <- self.liquidityTokenRef.withdraw(amount: amount) as! @UsdcUsdtSwapPair.Vault
 
     // Take back liquidity
-    let tokenBundle <- self.swapProxyRef.removeLiquidity(from: <-liquidityTokenVault, token1Amount: token1Amount, token2Amount: token2Amount)
+    let tokenBundle <- UsdcUsdtSwapPair.removeLiquidity(from: <-liquidityTokenVault, token1Amount: token1Amount, token2Amount: token2Amount)
 
     // Deposit liquidity tokens
     self.usdcVaultRef.deposit(from: <- tokenBundle.withdrawToken1())

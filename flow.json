@@ -77,7 +77,7 @@
 		"UsdcUsdtSwapPair": {
 			"source": "./contracts/exchange/UsdcUsdtSwapPair.cdc",
       "aliases": {
-        "mainnet": "0xcfdd90d4a00f7b5b"
+        "mainnet": "0x9c6f94adf47904b5"
       }
 		}
 	},
