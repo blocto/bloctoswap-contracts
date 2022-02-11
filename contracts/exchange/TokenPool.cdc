@@ -1,7 +1,7 @@
-import FungibleToken from 0xFUNGIBLETOKENADDRESS
-import FlowToken from 0xFLOWTOKENADDRESS
-import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
-import FlowSwapPair from 0xFLOWSWAPPAIRADDRESS
+import FungibleToken from "../token/FungibleToken.cdc"
+import FlowToken from "../token/FlowToken.cdc"
+import TeleportedTetherToken from "../token/TeleportedTetherToken.cdc"
+import FlowSwapPair from "./FlowUsdtSwapPair.cdc"
 
 // Perpetual pool between FlowToken and TeleportedTetherToken
 // Token1: FlowToken
@@ -161,7 +161,7 @@ pub contract TokenPool {
   pub fun swapToken1ForToken2(from: @FlowToken.Vault): @TeleportedTetherToken.Vault {
     pre {
       !TokenPool.isFrozen: "TokenPool is frozen"
-      from.balance > UFix64(0): "Empty token vault"
+      from.balance > 0.0: "Empty token vault"
     }
 
     // Calculate amount from pricing curve
@@ -169,7 +169,7 @@ pub contract TokenPool {
     let token1Amount = from.balance
     let token2Amount = self.quoteSwapExactToken1ForToken2(amount: token1Amount)
 
-    assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
+    assert(token2Amount > 0.0, message: "Exchanged amount too small")
 
     self.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
@@ -181,7 +181,7 @@ pub contract TokenPool {
   pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FlowToken.Vault {
     pre {
       !TokenPool.isFrozen: "TokenPool is frozen"
-      from.balance > UFix64(0): "Empty token vault"
+      from.balance > 0.0: "Empty token vault"
     }
 
     // Calculate amount from pricing curve
@@ -189,7 +189,7 @@ pub contract TokenPool {
     let token2Amount = from.balance
     let token1Amount = self.quoteSwapExactToken2ForToken1(amount: token2Amount)
 
-    assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
+    assert(token1Amount > 0.0, message: "Exchanged amount too small")
 
     // Add to Swap liquidity pool
     let fspPoolAmounts = FlowSwapPair.getPoolAmounts()

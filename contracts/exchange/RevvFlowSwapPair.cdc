@@ -179,7 +179,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
   //
   access(contract) fun mintTokens(amount: UFix64): @RevvFlowSwapPair.Vault {
     pre {
-      amount > UFix64(0): "Amount minted must be greater than zero"
+      amount > 0.0: "Amount minted must be greater than zero"
     }
     RevvFlowSwapPair.totalSupply = RevvFlowSwapPair.totalSupply + amount
     emit TokensMinted(amount: amount)
@@ -211,14 +211,14 @@ pub contract RevvFlowSwapPair: FungibleToken {
 
     pub fun addInitialLiquidity(from: @RevvFlowSwapPair.TokenBundle): @RevvFlowSwapPair.Vault {
       pre {
-        RevvFlowSwapPair.totalSupply == UFix64(0): "Pair already initialized"
+        RevvFlowSwapPair.totalSupply == 0.0: "Pair already initialized"
       }
 
       let token1Vault <- from.withdrawToken1()
       let token2Vault <- from.withdrawToken2()
 
-      assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
-      assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+      assert(token1Vault.balance > 0.0, message: "Empty token1 vault")
+      assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
 
       RevvFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
       RevvFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
@@ -303,7 +303,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
   access(contract) fun _swapToken1ForToken2(from: @REVV.Vault): @FlowToken.Vault {
     pre {
       !RevvFlowSwapPair.isFrozen: "RevvFlowSwapPair is frozen"
-      from.balance > UFix64(0): "Empty token vault"
+      from.balance > 0.0: "Empty token vault"
     }
 
     // Calculate amount from pricing curve
@@ -311,7 +311,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
     let token1Amount = from.balance * (1.0 - self.feePercentage)
     let token2Amount = self.quoteSwapExactToken1ForToken2(amount: token1Amount)
 
-    assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
+    assert(token2Amount > 0.0, message: "Exchanged amount too small")
 
     self.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
@@ -327,7 +327,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
   access(contract) fun _swapToken2ForToken1(from: @FlowToken.Vault): @REVV.Vault {
     pre {
       !RevvFlowSwapPair.isFrozen: "RevvFlowSwapPair is frozen"
-      from.balance > UFix64(0): "Empty token vault"
+      from.balance > 0.0: "Empty token vault"
     }
 
     // Calculate amount from pricing curve
@@ -335,7 +335,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
     let token2Amount = from.balance * (1.0 - self.feePercentage)
     let token1Amount = self.quoteSwapExactToken2ForToken1(amount: token2Amount)
 
-    assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
+    assert(token1Amount > 0.0, message: "Exchanged amount too small")
 
     self.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
@@ -360,14 +360,14 @@ pub contract RevvFlowSwapPair: FungibleToken {
 
   access(contract) fun _addLiquidity(from: @RevvFlowSwapPair.TokenBundle): @RevvFlowSwapPair.Vault {
     pre {
-      self.totalSupply > UFix64(0): "Pair must be initialized by admin first"
+      self.totalSupply > 0.0: "Pair must be initialized by admin first"
     }
 
     let token1Vault <- from.withdrawToken1()
     let token2Vault <- from.withdrawToken2()
 
-    assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
-    assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+    assert(token1Vault.balance > 0.0, message: "Empty token1 vault")
+    assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
 
     // shift decimal 4 places to avoid truncation error
     let token1Percentage: UFix64 = (token1Vault.balance * 10000.0) / RevvFlowSwapPair.token1Vault.balance
@@ -377,7 +377,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
     // to maximize profit, user should add liquidity propotional to current liquidity
     let liquidityPercentage = token1Percentage < token2Percentage ? token1Percentage : token2Percentage;
 
-    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
+    assert(liquidityPercentage > 0.0, message: "Liquidity too small")
 
     RevvFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
     RevvFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
@@ -394,14 +394,14 @@ pub contract RevvFlowSwapPair: FungibleToken {
 
   access(contract) fun _removeLiquidity(from: @RevvFlowSwapPair.Vault): @RevvFlowSwapPair.TokenBundle {
     pre {
-      from.balance > UFix64(0): "Empty liquidity token vault"
+      from.balance > 0.0: "Empty liquidity token vault"
       from.balance < RevvFlowSwapPair.totalSupply: "Cannot remove all liquidity"
     }
 
     // shift decimal 4 places to avoid truncation error
     let liquidityPercentage = (from.balance * 10000.0) / RevvFlowSwapPair.totalSupply
 
-    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
+    assert(liquidityPercentage > 0.0, message: "Liquidity too small")
 
     // Burn liquidity tokens and withdraw
     RevvFlowSwapPair.burnTokens(from: <- from)

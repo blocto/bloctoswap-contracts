@@ -1,6 +1,6 @@
-import FungibleToken from 0xFUNGIBLETOKENADDRESS
-import FUSD from 0xFUSDADDRESS
-import TeleportedTetherToken from 0xTELEPORTEDUSDTADDRESS
+import FungibleToken from "../token/FungibleToken.cdc"
+import FUSD from "../token/FUSD.cdc"
+import TeleportedTetherToken from "../token/TeleportedTetherToken.cdc"
 
 // Exchange pair between FUSD and TeleportedTetherToken
 // Token1: FUSD
@@ -173,7 +173,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   //
   access(contract) fun mintTokens(amount: UFix64): @FusdUsdtSwapPair.Vault {
     pre {
-      amount > UFix64(0): "Amount minted must be greater than zero"
+      amount > 0.0: "Amount minted must be greater than zero"
     }
     FusdUsdtSwapPair.totalSupply = FusdUsdtSwapPair.totalSupply + amount
     emit TokensMinted(amount: amount)
@@ -335,7 +335,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   access(contract) fun _swapToken1ForToken2(from: @FUSD.Vault): @TeleportedTetherToken.Vault {
     pre {
       !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
-      from.balance > UFix64(0): "Empty token vault"
+      from.balance > 0.0: "Empty token vault"
     }
 
     // Calculate amount from pricing curve
@@ -343,7 +343,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     let token1Amount = from.balance
     let token2Amount = self.quoteSwapExactToken1ForToken2(amount: token1Amount)
 
-    assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
+    assert(token2Amount > 0.0, message: "Exchanged amount too small")
 
     self.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
@@ -363,7 +363,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
   access(contract) fun _swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @FUSD.Vault {
     pre {
       !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
-      from.balance > UFix64(0): "Empty token vault"
+      from.balance > 0.0: "Empty token vault"
     }
 
     // Calculate amount from pricing curve
@@ -371,7 +371,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
     let token2Amount = from.balance
     let token1Amount = self.quoteSwapExactToken2ForToken1(amount: token2Amount)
 
-    assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
+    assert(token1Amount > 0.0, message: "Exchanged amount too small")
 
     self.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
@@ -400,14 +400,14 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
   pub fun addInitialLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
     pre {
-      self.totalSupply == UFix64(0): "Pair already initialized"
+      self.totalSupply == 0.0: "Pair already initialized"
     }
 
     let token1Vault <- from.withdrawToken1()
     let token2Vault <- from.withdrawToken2()
 
-    assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
-    assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+    assert(token1Vault.balance > 0.0, message: "Empty token1 vault")
+    assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
 
     let totalLiquidityAmount = token1Vault.balance + token2Vault.balance
 
@@ -422,14 +422,14 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
   access(contract) fun _addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
     pre {
-      self.totalSupply > UFix64(0): "Pair must be initialized first"
+      self.totalSupply > 0.0: "Pair must be initialized first"
     }
 
     let token1Vault <- from.withdrawToken1()
     let token2Vault <- from.withdrawToken2()
 
-    assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
-    assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+    assert(token1Vault.balance > 0.0, message: "Empty token1 vault")
+    assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
 
     let totalLiquidityAmount = token1Vault.balance + token2Vault.balance
 
@@ -452,7 +452,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
   access(contract) fun _removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
     pre {
-      from.balance > UFix64(0): "Empty liquidity token vault"
+      from.balance > 0.0: "Empty liquidity token vault"
       from.balance < FusdUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
       from.balance == token1Amount + token2Amount: "Incorrect withdrawal amounts"
     }

@@ -179,7 +179,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
   //
   access(contract) fun mintTokens(amount: UFix64): @StarlyTokenFlowSwapPair.Vault {
     pre {
-      amount > UFix64(0): "Amount minted must be greater than zero"
+      amount > 0.0: "Amount minted must be greater than zero"
     }
     StarlyTokenFlowSwapPair.totalSupply = StarlyTokenFlowSwapPair.totalSupply + amount
     emit TokensMinted(amount: amount)
@@ -211,14 +211,14 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
 
     pub fun addInitialLiquidity(from: @StarlyTokenFlowSwapPair.TokenBundle): @StarlyTokenFlowSwapPair.Vault {
       pre {
-        StarlyTokenFlowSwapPair.totalSupply == UFix64(0): "Pair already initialized"
+        StarlyTokenFlowSwapPair.totalSupply == 0.0: "Pair already initialized"
       }
 
       let token1Vault <- from.withdrawToken1()
       let token2Vault <- from.withdrawToken2()
 
-      assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
-      assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+      assert(token1Vault.balance > 0.0, message: "Empty token1 vault")
+      assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
 
       StarlyTokenFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
       StarlyTokenFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
@@ -303,7 +303,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
   access(contract) fun _swapToken1ForToken2(from: @StarlyToken.Vault): @FlowToken.Vault {
     pre {
       !StarlyTokenFlowSwapPair.isFrozen: "StarlyTokenFlowSwapPair is frozen"
-      from.balance > UFix64(0): "Empty token vault"
+      from.balance > 0.0: "Empty token vault"
     }
 
     // Calculate amount from pricing curve
@@ -311,7 +311,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
     let token1Amount = from.balance * (1.0 - self.feePercentage)
     let token2Amount = self.quoteSwapExactToken1ForToken2(amount: token1Amount)
 
-    assert(token2Amount > UFix64(0), message: "Exchanged amount too small")
+    assert(token2Amount > 0.0, message: "Exchanged amount too small")
 
     self.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
@@ -327,7 +327,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
   access(contract) fun _swapToken2ForToken1(from: @FlowToken.Vault): @StarlyToken.Vault {
     pre {
       !StarlyTokenFlowSwapPair.isFrozen: "StarlyTokenFlowSwapPair is frozen"
-      from.balance > UFix64(0): "Empty token vault"
+      from.balance > 0.0: "Empty token vault"
     }
 
     // Calculate amount from pricing curve
@@ -335,7 +335,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
     let token2Amount = from.balance * (1.0 - self.feePercentage)
     let token1Amount = self.quoteSwapExactToken2ForToken1(amount: token2Amount)
 
-    assert(token1Amount > UFix64(0), message: "Exchanged amount too small")
+    assert(token1Amount > 0.0, message: "Exchanged amount too small")
 
     self.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
@@ -360,14 +360,14 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
 
   access(contract) fun _addLiquidity(from: @StarlyTokenFlowSwapPair.TokenBundle): @StarlyTokenFlowSwapPair.Vault {
     pre {
-      self.totalSupply > UFix64(0): "Pair must be initialized by admin first"
+      self.totalSupply > 0.0: "Pair must be initialized by admin first"
     }
 
     let token1Vault <- from.withdrawToken1()
     let token2Vault <- from.withdrawToken2()
 
-    assert(token1Vault.balance > UFix64(0), message: "Empty token1 vault")
-    assert(token2Vault.balance > UFix64(0), message: "Empty token2 vault")
+    assert(token1Vault.balance > 0.0, message: "Empty token1 vault")
+    assert(token2Vault.balance > 0.0, message: "Empty token2 vault")
 
     // shift decimal 4 places to avoid truncation error
     let token1Percentage: UFix64 = (token1Vault.balance * 10000.0) / StarlyTokenFlowSwapPair.token1Vault.balance
@@ -377,7 +377,7 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
     // to maximize profit, user should add liquidity propotional to current liquidity
     let liquidityPercentage = token1Percentage < token2Percentage ? token1Percentage : token2Percentage;
 
-    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
+    assert(liquidityPercentage > 0.0, message: "Liquidity too small")
 
     StarlyTokenFlowSwapPair.token1Vault.deposit(from: <- token1Vault)
     StarlyTokenFlowSwapPair.token2Vault.deposit(from: <- token2Vault)
@@ -394,14 +394,14 @@ pub contract StarlyTokenFlowSwapPair: FungibleToken {
 
   access(contract) fun _removeLiquidity(from: @StarlyTokenFlowSwapPair.Vault): @StarlyTokenFlowSwapPair.TokenBundle {
     pre {
-      from.balance > UFix64(0): "Empty liquidity token vault"
+      from.balance > 0.0: "Empty liquidity token vault"
       from.balance < StarlyTokenFlowSwapPair.totalSupply: "Cannot remove all liquidity"
     }
 
     // shift decimal 4 places to avoid truncation error
     let liquidityPercentage = (from.balance * 10000.0) / StarlyTokenFlowSwapPair.totalSupply
 
-    assert(liquidityPercentage > UFix64(0), message: "Liquidity too small")
+    assert(liquidityPercentage > 0.0, message: "Liquidity too small")
 
     // Burn liquidity tokens and withdraw
     StarlyTokenFlowSwapPair.burnTokens(from: <- from)

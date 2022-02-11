@@ -156,7 +156,7 @@ pub contract REVV: FungibleToken {
   init() {
     // Init supply fields
     //
-    self.totalSupply = UFix64(0)
+    self.totalSupply = 0.0
     self.MAX_SUPPLY = UFix64(3_000_000_000)
 
     //Initialize the path fields

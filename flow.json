@@ -6,6 +6,13 @@
 		}
 	},
 	"contracts": {
+    "BloctoToken": {
+      "source": "./contracts/flow/token/BloctoToken.cdc",
+      "aliases": {
+        "testnet": "0x6e0797ac987005f5",
+        "mainnet": "0x0f9df91c9121c460"
+      }
+    },
 		"FungibleToken": {
       "source": "./contracts/token/FungibleToken.cdc",
       "aliases": {
