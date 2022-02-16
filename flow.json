@@ -51,7 +51,7 @@
 		"RevvFlowSwapPair": {
 			"source": "./contracts/exchange/RevvFlowSwapPair.cdc",
 			"aliases": {
-				"mainnet": "0xd01e482eb680ec9f"
+				"mainnet": "0x5e284fb7cff23a3f"
 			}
 		},
     "StarlyFlowSwapPair": {
@@ -99,6 +99,9 @@
       "fromFile": "./flow.testnet.json"
     },
 		"usdc-usdt-swap-admin-mainnet": {
+      "fromFile": "./flow.mainnet.json"
+    },
+		"revv-flow-swap-admin-mainnet": {
       "fromFile": "./flow.mainnet.json"
     }
 	},
