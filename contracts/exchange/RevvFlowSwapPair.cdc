@@ -300,7 +300,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
   }
 
   // Swaps Token1 (REVV) -> Token2 (FLOW)
-  access(contract) fun _swapToken1ForToken2(from: @REVV.Vault): @FlowToken.Vault {
+  pub fun swapToken1ForToken2(from: @REVV.Vault): @FlowToken.Vault {
     pre {
       !RevvFlowSwapPair.isFrozen: "RevvFlowSwapPair is frozen"
       from.balance > 0.0: "Empty token vault"
@@ -319,12 +319,8 @@ pub contract RevvFlowSwapPair: FungibleToken {
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @FlowToken.Vault)
   }
 
-  pub fun swapToken1ForToken2(from: @REVV.Vault): @FlowToken.Vault {
-    return <- RevvFlowSwapPair._swapToken1ForToken2(from: <-from)
-  }
-
   // Swap Token2 (FLOW) -> Token1 (REVV)
-  access(contract) fun _swapToken2ForToken1(from: @FlowToken.Vault): @REVV.Vault {
+  pub fun swapToken2ForToken1(from: @FlowToken.Vault): @REVV.Vault {
     pre {
       !RevvFlowSwapPair.isFrozen: "RevvFlowSwapPair is frozen"
       from.balance > 0.0: "Empty token vault"
@@ -343,10 +339,6 @@ pub contract RevvFlowSwapPair: FungibleToken {
     return <- (self.token1Vault.withdraw(amount: token1Amount) as! @REVV.Vault)
   }
 
-  pub fun swapToken2ForToken1(from: @FlowToken.Vault): @REVV.Vault {
-    return <- RevvFlowSwapPair._swapToken2ForToken1(from: <-from)
-  }
-
   // Used to add liquidity without minting new liquidity token
   pub fun donateLiquidity(from: @RevvFlowSwapPair.TokenBundle) {
     let token1Vault <- from.withdrawToken1()
@@ -358,7 +350,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
     destroy from
   }
 
-  access(contract) fun _addLiquidity(from: @RevvFlowSwapPair.TokenBundle): @RevvFlowSwapPair.Vault {
+  pub fun addLiquidity(from: @RevvFlowSwapPair.TokenBundle): @RevvFlowSwapPair.Vault {
     pre {
       self.totalSupply > 0.0: "Pair must be initialized by admin first"
     }
@@ -388,11 +380,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
     return <- liquidityTokenVault
   }
 
-  pub fun addLiquidity(from: @RevvFlowSwapPair.TokenBundle): @RevvFlowSwapPair.Vault {
-    return <- RevvFlowSwapPair._addLiquidity(from: <-from)
-  }
-
-  access(contract) fun _removeLiquidity(from: @RevvFlowSwapPair.Vault): @RevvFlowSwapPair.TokenBundle {
+  pub fun removeLiquidity(from: @RevvFlowSwapPair.Vault): @RevvFlowSwapPair.TokenBundle {
     pre {
       from.balance > 0.0: "Empty liquidity token vault"
       from.balance < RevvFlowSwapPair.totalSupply: "Cannot remove all liquidity"
@@ -411,10 +399,6 @@ pub contract RevvFlowSwapPair: FungibleToken {
 
     let tokenBundle <- RevvFlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
     return <- tokenBundle
-  }
-
-  pub fun removeLiquidity(from: @RevvFlowSwapPair.Vault): @RevvFlowSwapPair.TokenBundle {
-    return <- RevvFlowSwapPair._removeLiquidity(from: <-from)
   }
 
   init() {

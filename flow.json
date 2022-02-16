@@ -97,6 +97,9 @@
     },
 		"swap-admin-testnet": {
       "fromFile": "./flow.testnet.json"
+    },
+		"usdc-usdt-swap-admin-mainnet": {
+      "fromFile": "./flow.mainnet.json"
     }
 	},
   "deployments": {
