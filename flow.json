@@ -1,11 +1,11 @@
 {
-	"emulators": {
-		"default": {
-			"port": 3569,
-			"serviceAccount": "emulator-account"
-		}
-	},
-	"contracts": {
+  "emulators": {
+    "default": {
+      "port": 3569,
+      "serviceAccount": "emulator-account"
+    }
+  },
+  "contracts": {
     "BloctoToken": {
       "source": "./contracts/flow/token/BloctoToken.cdc",
       "aliases": {
@@ -13,7 +13,7 @@
         "mainnet": "0x0f9df91c9121c460"
       }
     },
-		"FungibleToken": {
+    "FungibleToken": {
       "source": "./contracts/token/FungibleToken.cdc",
       "aliases": {
         "emulator": "0xee82856bf20e2aa6",
@@ -28,39 +28,39 @@
         "mainnet": "0x1654653399040a61"
       }
     },
-		"FiatToken": {
+    "FiatToken": {
       "source": "./contracts/token/FiatToken.cdc",
       "aliases": {
         "mainnet": "0xb19436aae4d94622"
       }
     },
-		"FUSD": {
+    "FUSD": {
       "source": "./contracts/token/FUSD.cdc",
       "aliases": {
         "testnet": "0xe223d8a629e49c68",
         "mainnet": "0x3c5959b568896393"
       }
     },
-		"REVV": {
-			"source": "./contracts/token/REVV.cdc",
-			"aliases": {
-				"testnet": "0x14ca72fa4d45d2c3",
-				"mainnet": "0xd01e482eb680ec9f"
-			}
-		},
-		"RevvFlowSwapPair": {
-			"source": "./contracts/exchange/RevvFlowSwapPair.cdc",
-			"aliases": {
-				"mainnet": "0x5e284fb7cff23a3f"
-			}
-		},
+    "REVV": {
+      "source": "./contracts/token/REVV.cdc",
+      "aliases": {
+        "testnet": "0x14ca72fa4d45d2c3",
+        "mainnet": "0xd01e482eb680ec9f"
+      }
+    },
+    "RevvFlowSwapPair": {
+      "source": "./contracts/exchange/RevvFlowSwapPair.cdc",
+      "aliases": {
+        "mainnet": "0x5e284fb7cff23a3f"
+      }
+    },
     "StarlyFlowSwapPair": {
-			"source": "./contracts/exchange/StarlyFlowSwapPair.cdc",
-			"aliases": {
-				"mainnet": "0xd01e482eb680ec9f",
+      "source": "./contracts/exchange/StarlyFlowSwapPair.cdc",
+      "aliases": {
+        "mainnet": "0xd01e482eb680ec9f",
         "testnet": "0x22d84efc93a8b21a"
-			}
-		},
+      }
+    },
     "StarlyToken": {
       "source": "./contracts/token/StarlyToken.cdc",
       "aliases": {
@@ -75,53 +75,53 @@
         "mainnet": "0xcfdd90d4a00f7b5b"
       }
     },
-		"UsdcUsdtSwapPair": {
-			"source": "./contracts/exchange/UsdcUsdtSwapPair.cdc",
+    "UsdcUsdtSwapPair": {
+      "source": "./contracts/exchange/UsdcUsdtSwapPair.cdc",
       "aliases": {
         "mainnet": "0x9c6f94adf47904b5",
         "testnet": "0xd017f81bffc9aa05"
       }
-		}
-	},
-	"networks": {
-		"emulator": "127.0.0.1:3569",
-		"mainnet": "access.mainnet.nodes.onflow.org:9000",
-		"testnet": "access.devnet.nodes.onflow.org:9000"
-	},
-	"accounts": {
-		"emulator-account": {
+    }
+  },
+  "networks": {
+    "emulator": "127.0.0.1:3569",
+    "mainnet": "access.mainnet.nodes.onflow.org:9000",
+    "testnet": "access.devnet.nodes.onflow.org:9000"
+  },
+  "accounts": {
+    "emulator-account": {
       "address": "f8d6e0586b0a20c7",
       "keys": "eb4347b08ebd2f74d38bec1026b07430fe04510c95afe8534735677a3410dd87",
       "chain": "flow-emulator"
     },
-		"usdc-admin-testnet": {
+    "usdc-admin-testnet": {
       "fromFile": "./flow.testnet.json"
     },
-		"swap-admin-testnet": {
+    "swap-admin-testnet": {
       "fromFile": "./flow.testnet.json"
     },
-		"starly-flow-swap-admin-testnet": {
+    "starly-flow-swap-admin-testnet": {
       "fromFile": "./flow.testnet.json"
     },
-		"usdc-usdt-swap-admin-mainnet": {
+    "usdc-usdt-swap-admin-mainnet": {
       "fromFile": "./flow.mainnet.json"
     },
-		"revv-flow-swap-admin-mainnet": {
+    "revv-flow-swap-admin-mainnet": {
       "fromFile": "./flow.mainnet.json"
     }
-	},
+  },
   "deployments": {
     "testnet": {
       "usdc-admin-testnet": [
         "FiatToken"
       ],
-			"swap-admin-testnet": [
-				"UsdcUsdtSwapPair",
-				"RevvFlowSwapPair"
-			],
-			"starly-flow-swap-admin-testnet": [
+      "swap-admin-testnet": [
+        "UsdcUsdtSwapPair",
+        "RevvFlowSwapPair"
+      ],
+      "starly-flow-swap-admin-testnet": [
         "StarlyFlowSwapPair"
-			]
+      ]
     }
   }
 }
