@@ -54,8 +54,8 @@
         "mainnet": "0x5e284fb7cff23a3f"
       }
     },
-    "StarlyFlowSwapPair": {
-      "source": "./contracts/exchange/StarlyFlowSwapPair.cdc",
+    "StarlyUsdtSwapPair": {
+      "source": "./contracts/exchange/StarlyUsdtSwapPair.cdc",
       "aliases": {
         "mainnet": "0xd01e482eb680ec9f",
         "testnet": "0x22d84efc93a8b21a"
@@ -103,6 +103,9 @@
     "starly-flow-swap-admin-testnet": {
       "fromFile": "./flow.testnet.json"
     },
+    "starly-usdt-swap-admin-testnet": {
+      "fromFile": "./flow.testnet.json"
+    },
     "usdc-usdt-swap-admin-mainnet": {
       "fromFile": "./flow.mainnet.json"
     },
@@ -119,8 +122,8 @@
         "UsdcUsdtSwapPair",
         "RevvFlowSwapPair"
       ],
-      "starly-flow-swap-admin-testnet": [
-        "StarlyFlowSwapPair"
+      "starly-usdt-swap-admin-testnet": [
+        "StarlyUsdtSwapPair"
       ]
     }
   }
