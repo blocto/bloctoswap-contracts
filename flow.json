@@ -57,7 +57,7 @@
     "StarlyUsdtSwapPair": {
       "source": "./contracts/exchange/StarlyUsdtSwapPair.cdc",
       "aliases": {
-        "mainnet": "0xd01e482eb680ec9f",
+        "mainnet": "0x6efab66df92c37e4",
         "testnet": "0x22d84efc93a8b21a"
       }
     },
@@ -110,6 +110,9 @@
       "fromFile": "./flow.mainnet.json"
     },
     "revv-flow-swap-admin-mainnet": {
+      "fromFile": "./flow.mainnet.json"
+    },
+    "starly-usdt-swap-admin-mainnet": {
       "fromFile": "./flow.mainnet.json"
     }
   },
