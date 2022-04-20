@@ -21,6 +21,13 @@
         "mainnet": "0xf233dcee88fe0abe"
       }
     },
+    "FlowSwapPair": {
+      "source": "./contracts/exchange/FlowSwapPair.cdc",
+      "aliases": {
+        "testnet": "0xd9854329b7edf136",
+        "mainnet": "0xc6c77b9f5c7a378f"
+      }
+    },
     "FlowToken": {
       "source": "./contracts/token/FlowToken.cdc",
       "aliases": {
@@ -31,7 +38,8 @@
     "FiatToken": {
       "source": "./contracts/token/FiatToken.cdc",
       "aliases": {
-        "mainnet": "0xb19436aae4d94622"
+        "mainnet": "0xb19436aae4d94622",
+        "testnet": "0xa983fecbed621163"
       }
     },
     "FUSD": {
@@ -68,6 +76,13 @@
         "mainnet": "0x142fa6570b62fd97"
       }
     },
+    "TeleportedSportiumToken": {
+      "source": "./contracts/token/TeleportedSportiumToken.cdc",
+      "aliases": {
+        "testnet": "0xb097866d87d01550",
+        "mainnet": "0x475755d2c9dccc3a"
+      }
+    },
     "TeleportedTetherToken": {
       "source": "./contracts/token/TeleportedTetherToken.cdc",
       "aliases": {
@@ -79,7 +94,7 @@
       "source": "./contracts/exchange/UsdcUsdtSwapPair.cdc",
       "aliases": {
         "mainnet": "0x9c6f94adf47904b5",
-        "testnet": "0xd017f81bffc9aa05"
+        "testnet": "0x481744401ea249c0"
       }
     }
   },
@@ -94,7 +109,7 @@
       "keys": "eb4347b08ebd2f74d38bec1026b07430fe04510c95afe8534735677a3410dd87",
       "chain": "flow-emulator"
     },
-    "usdc-admin-testnet": {
+    "usdc-swap-admin-testnet": {
       "fromFile": "./flow.testnet.json"
     },
     "swap-admin-testnet": {
@@ -118,12 +133,11 @@
   },
   "deployments": {
     "testnet": {
-      "usdc-admin-testnet": [
-        "FiatToken"
-      ],
       "swap-admin-testnet": [
-        "UsdcUsdtSwapPair",
         "RevvFlowSwapPair"
+      ],
+      "usdc-swap-admin-testnet": [
+        "UsdcUsdtSwapPair"
       ],
       "starly-usdt-swap-admin-testnet": [
         "StarlyUsdtSwapPair"

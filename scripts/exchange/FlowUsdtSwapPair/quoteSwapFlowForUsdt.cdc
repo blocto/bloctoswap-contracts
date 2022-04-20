@@ -1,4 +1,4 @@
-import FlowSwapPair from 0xFLOWSWAPPAIRADDRESS
+import FlowSwapPair from "../../../contracts/exchange/FlowSwapPair.cdc"
 
 // In FlowSwapPair (FLOW <> tUSDT)
 // Token1: FLOW
