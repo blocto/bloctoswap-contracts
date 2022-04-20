@@ -43,7 +43,7 @@ transaction(token1Amount: UFix64, token2Amount: UFix64) {
     self.liquidityTokenRef = signer.borrow<&SprtUsdtSwapPair.Vault>(from: SprtUsdtSwapPair.TokenStoragePath)
       ?? panic("Could not borrow a reference to Vault")
 
-    self.adminRef = signer.borrow<&SprtUsdtSwapPair.Admin>(from: /storage/StarlyUsdtSwapAdmin)
+    self.adminRef = signer.borrow<&SprtUsdtSwapPair.Admin>(from: /storage/SprtUsdtSwapAdmin)
       ?? panic("Could not borrow a reference to Admin")
   }
 
