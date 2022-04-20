@@ -62,6 +62,12 @@
         "mainnet": "0x5e284fb7cff23a3f"
       }
     },
+    "SprtUsdtSwapPair": {
+      "source": "./contracts/exchange/SprtUsdtSwapPair.cdc",
+      "aliases": {
+        "testnet": "0x0f5be7fc963db41b"
+      }
+    },
     "StarlyUsdtSwapPair": {
       "source": "./contracts/exchange/StarlyUsdtSwapPair.cdc",
       "aliases": {
@@ -115,6 +121,9 @@
     "swap-admin-testnet": {
       "fromFile": "./flow.testnet.json"
     },
+    "sprt-usdt-swap-admin-testnet": {
+      "fromFile": "./flow.testnet.json"
+    },
     "starly-flow-swap-admin-testnet": {
       "fromFile": "./flow.testnet.json"
     },
@@ -138,6 +147,9 @@
       ],
       "usdc-swap-admin-testnet": [
         "UsdcUsdtSwapPair"
+      ],
+      "sprt-usdt-swap-admin-testnet": [
+        "SprtUsdtSwapPair"
       ],
       "starly-usdt-swap-admin-testnet": [
         "StarlyUsdtSwapPair"
