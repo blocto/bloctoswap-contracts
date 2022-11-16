@@ -297,8 +297,8 @@ pub contract FusdUsdtSwapPair: FungibleToken {
       self.token2Vault.balance >= amount: "Not enough Token2 in the pool"
     }
 
-    // Fixed price 1:1
-    return amount
+    // Incentify users to deprecate FUSD
+    return 1.001 * amount
   }
 
   // Get quote for Token1 -> Token2 (given)
@@ -307,8 +307,8 @@ pub contract FusdUsdtSwapPair: FungibleToken {
       self.token2Vault.balance >= amount: "Not enough Token2 in the pool"
     }
 
-    // Fixed price 1:1
-    return amount
+    // Incentify users to deprecate FUSD
+    return amount / 1.001
   }
 
   // Get quote for Token2 (given) -> Token1
@@ -317,8 +317,8 @@ pub contract FusdUsdtSwapPair: FungibleToken {
       self.token1Vault.balance >= amount: "Not enough Token1 in the pool"
     }
 
-    // Fixed price 1:1
-    return amount
+    // Incentify users to deprecate FUSD
+    return 0.999 * amount
   }
 
   // Get quote for Token2 -> Token1 (given)
@@ -327,8 +327,8 @@ pub contract FusdUsdtSwapPair: FungibleToken {
       self.token1Vault.balance >= amount: "Not enough Token1 in the pool"
     }
 
-    // Fixed price 1:1
-    return amount
+    // Incentify users to deprecate FUSD
+    return amount / 0.999
   }
 
   // Swaps Token1 (FUSD) -> Token2 (tUSDT)
