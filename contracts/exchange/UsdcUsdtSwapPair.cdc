@@ -315,6 +315,10 @@ pub contract UsdcUsdtSwapPair: FungibleToken {
   }
 
   pub fun addLiquidity(from: @UsdcUsdtSwapPair.TokenBundle): @UsdcUsdtSwapPair.Vault {
+    pre {
+      !UsdcUsdtSwapPair.isFrozen: "UsdcUsdtSwapPair is frozen"
+    }
+
     let token1Vault <- from.withdrawToken1()
     let token2Vault <- from.withdrawToken2()
 
@@ -332,6 +336,7 @@ pub contract UsdcUsdtSwapPair: FungibleToken {
 
   pub fun removeLiquidity(from: @UsdcUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @UsdcUsdtSwapPair.TokenBundle {
     pre {
+      !UsdcUsdtSwapPair.isFrozen: "UsdcUsdtSwapPair is frozen"
       from.balance > 0.0: "Empty liquidity token vault"
       from.balance < UsdcUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
       from.balance == token1Amount + token2Amount: "Incorrect withdrawal amounts"

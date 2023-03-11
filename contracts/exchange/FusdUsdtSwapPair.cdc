@@ -421,6 +421,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
   access(contract) fun _addLiquidity(from: @FusdUsdtSwapPair.TokenBundle): @FusdUsdtSwapPair.Vault {
     pre {
+      !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
       self.totalSupply > 0.0: "Pair must be initialized first"
     }
 
@@ -450,6 +451,7 @@ pub contract FusdUsdtSwapPair: FungibleToken {
 
   access(contract) fun _removeLiquidity(from: @FusdUsdtSwapPair.Vault, token1Amount: UFix64, token2Amount: UFix64): @FusdUsdtSwapPair.TokenBundle {
     pre {
+      !FusdUsdtSwapPair.isFrozen: "FusdUsdtSwapPair is frozen"
       from.balance > 0.0: "Empty liquidity token vault"
       from.balance < FusdUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
       from.balance == token1Amount + token2Amount: "Incorrect withdrawal amounts"
