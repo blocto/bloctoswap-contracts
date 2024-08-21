@@ -1,19 +1,21 @@
-import FungibleToken from "../token/FungibleToken.cdc"
-import BloctoToken from "../token/BloctoToken.cdc"
-import TeleportedTetherToken from "../token/TeleportedTetherToken.cdc"
+import "FungibleToken"
+import "BloctoToken"
+import "TeleportedTetherToken"
+import "MetadataViews"
+import "FungibleTokenMetadataViews"
 
 // Exchange pair between BloctoToken and TeleportedTetherToken
 // Token1: BloctoToken
 // Token2: TeleportedTetherToken
-pub contract BltUsdtSwapPair: FungibleToken {
+access(all) contract BltUsdtSwapPair: FungibleToken {
   // Frozen flag controlled by Admin
-  pub var isFrozen: Bool
+  access(all) var isFrozen: Bool
   
   // Total supply of BltUsdtSwapPair liquidity token in existence
-  pub var totalSupply: UFix64
+  access(all) var totalSupply: UFix64
 
   // Fee charged when performing token swap
-  pub var feePercentage: UFix64
+  access(all) var feePercentage: UFix64
 
   // Controls BloctoToken vault
   access(contract) let token1Vault: @BloctoToken.Vault
@@ -22,36 +24,93 @@ pub contract BltUsdtSwapPair: FungibleToken {
   access(contract) let token2Vault: @TeleportedTetherToken.Vault
 
   // Defines token vault storage path
-  pub let TokenStoragePath: StoragePath
+  access(all) let TokenStoragePath: StoragePath
 
   // Defines token vault public balance path
-  pub let TokenPublicBalancePath: PublicPath
+  access(all) let TokenPublicBalancePath: PublicPath
 
   // Defines token vault public receiver path
-  pub let TokenPublicReceiverPath: PublicPath
+  access(all) let TokenPublicReceiverPath: PublicPath
 
   // Event that is emitted when the contract is created
-  pub event TokensInitialized(initialSupply: UFix64)
+  access(all) event TokensInitialized(initialSupply: UFix64)
 
   // Event that is emitted when tokens are withdrawn from a Vault
-  pub event TokensWithdrawn(amount: UFix64, from: Address?)
+  access(all) event TokensWithdrawn(amount: UFix64, from: Address?)
 
   // Event that is emitted when tokens are deposited to a Vault
-  pub event TokensDeposited(amount: UFix64, to: Address?)
+  access(all) event TokensDeposited(amount: UFix64, to: Address?)
 
   // Event that is emitted when new tokens are minted
-  pub event TokensMinted(amount: UFix64)
+  access(all) event TokensMinted(amount: UFix64)
 
   // Event that is emitted when tokens are destroyed
-  pub event TokensBurned(amount: UFix64)
+  access(all) event TokensBurned(amount: UFix64)
 
   // Event that is emitted when trading fee is updated
-  pub event FeeUpdated(feePercentage: UFix64)
+  access(all) event FeeUpdated(feePercentage: UFix64)
 
   // Event that is emitted when a swap happens
   // Side 1: from token1 to token2
   // Side 2: from token2 to token1
-  pub event Trade(token1Amount: UFix64, token2Amount: UFix64, side: UInt8)
+  access(all) event Trade(token1Amount: UFix64, token2Amount: UFix64, side: UInt8)
+
+  /// Gets a list of the metadata views that this contract supports
+  access(all) view fun getContractViews(resourceType: Type?): [Type] {
+    return [Type<FungibleTokenMetadataViews.FTView>(),
+            Type<FungibleTokenMetadataViews.FTDisplay>(),
+            Type<FungibleTokenMetadataViews.FTVaultData>(),
+            Type<FungibleTokenMetadataViews.TotalSupply>()]
+  }
+
+  /// Get a Metadata View
+  ///
+  /// @param view: The Type of the desired view.
+  /// @return A structure representing the requested view.
+  ///
+  access(all) fun resolveContractView(resourceType: Type?, viewType: Type): AnyStruct? {
+    switch viewType {
+      case Type<FungibleTokenMetadataViews.FTView>():
+        return FungibleTokenMetadataViews.FTView(
+          ftDisplay: self.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTDisplay>()) as! FungibleTokenMetadataViews.FTDisplay?,
+          ftVaultData: self.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTVaultData>()) as! FungibleTokenMetadataViews.FTVaultData?
+        )
+      case Type<FungibleTokenMetadataViews.FTDisplay>():
+        let media = MetadataViews.Media(
+            file: MetadataViews.HTTPFile(
+            url: "https://swap.blocto.app/favicon-144x144.png"
+          ),
+          mediaType: "image/png"
+        )
+        let medias = MetadataViews.Medias([media])
+        return FungibleTokenMetadataViews.FTDisplay(
+          name: "BLT/tUSDT Swap LP Token",
+          symbol: "BLTUSDT",
+          description: "BloctoSwap liquidity provider token for the BLT/tUSDT swap pair.",
+          externalURL: MetadataViews.ExternalURL("https://swap.blocto.app"),
+          logos: medias,
+          socials: {
+            "twitter": MetadataViews.ExternalURL("https://x.com/bloctoapp")
+          }
+        )
+      case Type<FungibleTokenMetadataViews.FTVaultData>():
+        let vaultRef = BltUsdtSwapPair.account.storage.borrow<auth(FungibleToken.Withdraw) &BltUsdtSwapPair.Vault>(from: /storage/bltUsdtFspLpVault)
+        ?? panic("Could not borrow reference to the contract's Vault!")
+          return FungibleTokenMetadataViews.FTVaultData(
+            storagePath: /storage/bltUsdtFspLpVault,
+            receiverPath: /public/bltUsdtFspLpReceiver,
+            metadataPath: /public/bltUsdtFspLpBalance,
+            receiverLinkedType: Type<&{FungibleToken.Receiver, FungibleToken.Vault}>(),
+            metadataLinkedType: Type<&{FungibleToken.Balance, FungibleToken.Vault}>(),
+            createEmptyVaultFunction: (fun (): @{FungibleToken.Vault} {
+              return <-vaultRef.createEmptyVault()
+            })
+          )
+      case Type<FungibleTokenMetadataViews.TotalSupply>():
+          return FungibleTokenMetadataViews.TotalSupply(totalSupply: BltUsdtSwapPair.totalSupply)
+    }
+    return nil
+  }
 
   // Vault
   //
@@ -65,14 +124,35 @@ pub contract BltUsdtSwapPair: FungibleToken {
   // out of thin air. A special Minter resource needs to be defined to mint
   // new tokens.
   //
-  pub resource Vault: FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance {
+  access(all) resource Vault: FungibleToken.Vault {
 
     // holds the balance of a users tokens
-    pub var balance: UFix64
+    access(all) var balance: UFix64
 
     // initialize the balance at resource creation time
     init(balance: UFix64) {
       self.balance = balance
+    }
+
+    // Called when a fungible token is burned via the `Burner.burn()` method
+    access(contract) fun burnCallback() {
+      if self.balance > 0.0 {
+        BltUsdtSwapPair.totalSupply = BltUsdtSwapPair.totalSupply - self.balance
+      }
+      self.balance = 0.0
+    }
+
+    // getSupportedVaultTypes optionally returns a list of vault types that this receiver accepts
+    access(all) view fun getSupportedVaultTypes(): {Type: Bool} {
+      return {self.getType(): true}
+    }
+
+    access(all) view fun isSupportedVaultType(type: Type): Bool {
+      if (type == self.getType()) { return true } else { return false }
+    }
+    
+    access(all) view fun isAvailableToWithdraw(amount: UFix64): Bool{ 
+      return self.balance >= amount
     }
 
     // withdraw
@@ -84,7 +164,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
     // created Vault to the context that called so it can be deposited
     // elsewhere.
     //
-    pub fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
+    access(FungibleToken.Withdraw) fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
       self.balance = self.balance - amount
       emit TokensWithdrawn(amount: amount, from: self.owner?.address)
       return <-create Vault(balance: amount)
@@ -97,7 +177,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
     // It is allowed to destroy the sent Vault because the Vault
     // was a temporary holder of the tokens. The Vault's balance has
     // been consumed and therefore can be destroyed.
-    pub fun deposit(from: @{FungibleToken.Vault}) {
+    access(all) fun deposit(from: @{FungibleToken.Vault}) {
       let vault <- from as! @BltUsdtSwapPair.Vault
       self.balance = self.balance + vault.balance
       emit TokensDeposited(amount: vault.balance, to: self.owner?.address)
@@ -105,8 +185,26 @@ pub contract BltUsdtSwapPair: FungibleToken {
       destroy vault
     }
 
-    destroy() {
-      BltUsdtSwapPair.totalSupply = BltUsdtSwapPair.totalSupply - self.balance
+    // Get all the Metadata Views implemented
+    //
+    // @return An array of Types defining the implemented views. This value will be used by
+    //         developers to know which parameter to pass to the resolveView() method.
+    //
+    access(all) view fun getViews(): [Type]{
+        return BltUsdtSwapPair.getContractViews(resourceType: nil)
+    }
+
+    // Get a Metadata View
+    //
+    // @param view: The Type of the desired view.
+    // @return A structure representing the requested view.
+    //
+    access(all) fun resolveView(_ view: Type): AnyStruct? {
+        return BltUsdtSwapPair.resolveContractView(resourceType: nil, viewType: view)
+    }
+
+    access(all) fun createEmptyVault(): @{FungibleToken.Vault}{ 
+      return <-create Vault(balance: 0.0)
     }
   }
 
@@ -117,13 +215,13 @@ pub contract BltUsdtSwapPair: FungibleToken {
   // and store the returned Vault in their storage in order to allow their
   // account to be able to receive deposits of this token type.
   //
-  pub fun createEmptyVault(): @{FungibleToken.Vault} {
+  access(all) fun createEmptyVault(vaultType: Type): @BltUsdtSwapPair.Vault {
     return <-create Vault(balance: 0.0)
   }
 
-  pub resource TokenBundle {
-    pub var token1: @BloctoToken.Vault
-    pub var token2: @TeleportedTetherToken.Vault
+  access(all) resource TokenBundle {
+    access(all) var token1: @BloctoToken.Vault
+    access(all) var token2: @TeleportedTetherToken.Vault
 
     // initialize the vault bundle
     init(fromToken1: @BloctoToken.Vault, fromToken2: @TeleportedTetherToken.Vault) {
@@ -131,44 +229,39 @@ pub contract BltUsdtSwapPair: FungibleToken {
       self.token2 <- fromToken2
     }
 
-    pub fun depositToken1(from: @BloctoToken.Vault) {
+    access(all) fun depositToken1(from: @BloctoToken.Vault) {
       self.token1.deposit(from: <- (from as! @{FungibleToken.Vault}))
     }
 
-    pub fun depositToken2(from: @TeleportedTetherToken.Vault) {
+    access(all) fun depositToken2(from: @TeleportedTetherToken.Vault) {
       self.token2.deposit(from: <- (from as! @{FungibleToken.Vault}))
     }
 
-    pub fun withdrawToken1(): @BloctoToken.Vault {
-      var vault <- BloctoToken.createEmptyVault() as! @BloctoToken.Vault
+    access(all) fun withdrawToken1(): @BloctoToken.Vault {
+      var vault <- BloctoToken.createEmptyVault(vaultType: Type<@BloctoToken.Vault>())
       vault <-> self.token1
       return <- vault
     }
 
-    pub fun withdrawToken2(): @TeleportedTetherToken.Vault {
-      var vault <- TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault
+    access(all) fun withdrawToken2(): @TeleportedTetherToken.Vault {
+      var vault <- TeleportedTetherToken.createEmptyVault(vaultType: Type<@TeleportedTetherToken.Vault>())
       vault <-> self.token2
       return <- vault
-    }
-
-    destroy() {
-      destroy self.token1
-      destroy self.token2
     }
   }
 
   // createEmptyBundle
   //
-  pub fun createEmptyTokenBundle(): @BltUsdtSwapPair.TokenBundle {
+  access(all) fun createEmptyTokenBundle(): @BltUsdtSwapPair.TokenBundle {
     return <- create TokenBundle(
-      fromToken1: <- (BloctoToken.createEmptyVault() as! @BloctoToken.Vault),
-      fromToken2: <- (TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault)
+      fromToken1: <- BloctoToken.createEmptyVault(vaultType: Type<@BloctoToken.Vault>()),
+      fromToken2: <- TeleportedTetherToken.createEmptyVault(vaultType: Type<@TeleportedTetherToken.Vault>())
     )
   }
 
   // createTokenBundle
   //
-  pub fun createTokenBundle(fromToken1: @BloctoToken.Vault, fromToken2: @TeleportedTetherToken.Vault): @BltUsdtSwapPair.TokenBundle {
+  access(all) fun createTokenBundle(fromToken1: @BloctoToken.Vault, fromToken2: @TeleportedTetherToken.Vault): @BltUsdtSwapPair.TokenBundle {
     return <- create TokenBundle(fromToken1: <- fromToken1, fromToken2: <- fromToken2)
   }
 
@@ -200,39 +293,16 @@ pub contract BltUsdtSwapPair: FungibleToken {
     emit TokensBurned(amount: amount)
   }
 
-  pub resource SwapProxy {
-    pub fun swapToken1ForToken2(from: @BloctoToken.Vault): @TeleportedTetherToken.Vault {
-      return <- BltUsdtSwapPair._swapToken1ForToken2(from: <-from)
-    }
-
-    pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @BloctoToken.Vault {
-      return <- BltUsdtSwapPair._swapToken2ForToken1(from: <-from)
-    }
-
-    pub fun addLiquidity(from: @BltUsdtSwapPair.TokenBundle): @BltUsdtSwapPair.Vault {
-      return <- BltUsdtSwapPair._addLiquidity(from: <-from)
-    }
-
-    pub fun removeLiquidity(from: @BltUsdtSwapPair.Vault): @BltUsdtSwapPair.TokenBundle {
-      return <- BltUsdtSwapPair._removeLiquidity(from: <-from)
-    }
-  }
-
-  pub resource Admin {
-    pub fun freeze() {
+  access(all) resource Admin {
+    access(all) fun freeze() {
       BltUsdtSwapPair.isFrozen = true
     }
 
-    pub fun unfreeze() {
+    access(all) fun unfreeze() {
       BltUsdtSwapPair.isFrozen = false
     }
 
-    pub fun setProxyOnly(proxyOnly: Bool) {
-      BltUsdtSwapPair.account.load<Bool>(from: /storage/proxyOnly)
-      BltUsdtSwapPair.account.save(proxyOnly, to: /storage/proxyOnly)
-    }
-
-    pub fun addInitialLiquidity(from: @BltUsdtSwapPair.TokenBundle): @BltUsdtSwapPair.Vault {
+    access(all) fun addInitialLiquidity(from: @BltUsdtSwapPair.TokenBundle): @BltUsdtSwapPair.Vault {
       pre {
         BltUsdtSwapPair.totalSupply == 0.0: "Pair already initialized"
       }
@@ -252,20 +322,16 @@ pub contract BltUsdtSwapPair: FungibleToken {
       return <- BltUsdtSwapPair.mintTokens(amount: 1.0)
     }
 
-    pub fun updateFeePercentage(feePercentage: UFix64) {
+    access(all) fun updateFeePercentage(feePercentage: UFix64) {
       BltUsdtSwapPair.feePercentage = feePercentage
 
       emit FeeUpdated(feePercentage: feePercentage)
     }
-
-    pub fun createSwapProxy(): @BltUsdtSwapPair.SwapProxy {
-      return <- create BltUsdtSwapPair.SwapProxy()
-    }
   }
 
-  pub struct PoolAmounts {
-    pub let token1Amount: UFix64
-    pub let token2Amount: UFix64
+  access(all) struct PoolAmounts {
+    access(all) let token1Amount: UFix64
+    access(all) let token2Amount: UFix64
 
     init(token1Amount: UFix64, token2Amount: UFix64) {
       self.token1Amount = token1Amount
@@ -273,21 +339,17 @@ pub contract BltUsdtSwapPair: FungibleToken {
     }
   }
 
-  pub fun proxyOnly(): Bool {
-    return self.account.copy<Bool>(from: /storage/proxyOnly) ?? false
-  }
-
-  pub fun getFeePercentage(): UFix64 {
+  access(all) fun getFeePercentage(): UFix64 {
     return self.feePercentage
   }
 
   // Check current pool amounts
-  pub fun getPoolAmounts(): PoolAmounts {
+  access(all) fun getPoolAmounts(): PoolAmounts {
     return PoolAmounts(token1Amount: BltUsdtSwapPair.token1Vault.balance, token2Amount: BltUsdtSwapPair.token2Vault.balance)
   }
 
   // Get quote for Token1 (given) -> Token2
-  pub fun quoteSwapExactToken1ForToken2(amount: UFix64): UFix64 {
+  access(all) fun quoteSwapExactToken1ForToken2(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token1Amount + amount) * (token2Amount - quote)
@@ -297,7 +359,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
   }
 
   // Get quote for Token1 -> Token2 (given)
-  pub fun quoteSwapToken1ForExactToken2(amount: UFix64): UFix64 {
+  access(all) fun quoteSwapToken1ForExactToken2(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     assert(poolAmounts.token2Amount > amount, message: "Not enough Token2 in the pool")
@@ -309,7 +371,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
   }
 
   // Get quote for Token2 (given) -> Token1
-  pub fun quoteSwapExactToken2ForToken1(amount: UFix64): UFix64 {
+  access(all) fun quoteSwapExactToken2ForToken1(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     // token1Amount * token2Amount = token1Amount' * token2Amount' = (token2Amount + amount) * (token1Amount - quote)
@@ -319,7 +381,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
   }
 
   // Get quote for Token2 -> Token1 (given)
-  pub fun quoteSwapToken2ForExactToken1(amount: UFix64): UFix64 {
+  access(all) fun quoteSwapToken2ForExactToken1(amount: UFix64): UFix64 {
     let poolAmounts = self.getPoolAmounts()
 
     assert(poolAmounts.token1Amount > amount, message: "Not enough Token1 in the pool")
@@ -331,7 +393,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
   }
 
   // Swaps Token1 (BLT) -> Token2 (tUSDT)
-  access(contract) fun _swapToken1ForToken2(from: @BloctoToken.Vault): @TeleportedTetherToken.Vault {
+  access(all) fun swapToken1ForToken2(from: @BloctoToken.Vault): @TeleportedTetherToken.Vault {
     pre {
       !BltUsdtSwapPair.isFrozen: "BltUsdtSwapPair is frozen"
       from.balance > 0.0: "Empty token vault"
@@ -350,16 +412,8 @@ pub contract BltUsdtSwapPair: FungibleToken {
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
   }
 
-  pub fun swapToken1ForToken2(from: @BloctoToken.Vault): @TeleportedTetherToken.Vault {
-    pre {
-      !BltUsdtSwapPair.proxyOnly(): "BltUsdtSwapPair is proxyOnly"
-    }
-
-    return <- BltUsdtSwapPair._swapToken1ForToken2(from: <-from)
-  }
-
   // Swap Token2 (tUSDT) -> Token1 (BLT)
-  access(contract) fun _swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @BloctoToken.Vault {
+  access(all) fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @BloctoToken.Vault {
     pre {
       !BltUsdtSwapPair.isFrozen: "BltUsdtSwapPair is frozen"
       from.balance > 0.0: "Empty token vault"
@@ -378,16 +432,8 @@ pub contract BltUsdtSwapPair: FungibleToken {
     return <- (self.token1Vault.withdraw(amount: token1Amount) as! @BloctoToken.Vault)
   }
 
-  pub fun swapToken2ForToken1(from: @TeleportedTetherToken.Vault): @BloctoToken.Vault {
-    pre {
-      !BltUsdtSwapPair.proxyOnly(): "BltUsdtSwapPair is proxyOnly"
-    }
-
-    return <- BltUsdtSwapPair._swapToken2ForToken1(from: <-from)
-  }
-
   // Used to add liquidity without minting new liquidity token
-  pub fun donateLiquidity(from: @BltUsdtSwapPair.TokenBundle) {
+  access(all) fun donateLiquidity(from: @BltUsdtSwapPair.TokenBundle) {
     let token1Vault <- from.withdrawToken1()
     let token2Vault <- from.withdrawToken2()
 
@@ -397,7 +443,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
     destroy from
   }
 
-  access(contract) fun _addLiquidity(from: @BltUsdtSwapPair.TokenBundle): @BltUsdtSwapPair.Vault {
+  access(all) fun addLiquidity(from: @BltUsdtSwapPair.TokenBundle): @BltUsdtSwapPair.Vault {
     pre {
       self.totalSupply > 0.0: "Pair must be initialized by admin first"
     }
@@ -427,15 +473,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
     return <- liquidityTokenVault
   }
 
-  pub fun addLiquidity(from: @BltUsdtSwapPair.TokenBundle): @BltUsdtSwapPair.Vault {
-    pre {
-      !BltUsdtSwapPair.proxyOnly(): "BltUsdtSwapPair is proxyOnly"
-    }
-
-    return <- BltUsdtSwapPair._addLiquidity(from: <-from)
-  }
-
-  access(contract) fun _removeLiquidity(from: @BltUsdtSwapPair.Vault): @BltUsdtSwapPair.TokenBundle {
+  access(all) fun removeLiquidity(from: @BltUsdtSwapPair.Vault): @BltUsdtSwapPair.TokenBundle {
     pre {
       from.balance > 0.0: "Empty liquidity token vault"
       from.balance < BltUsdtSwapPair.totalSupply: "Cannot remove all liquidity"
@@ -456,14 +494,6 @@ pub contract BltUsdtSwapPair: FungibleToken {
     return <- tokenBundle
   }
 
-  pub fun removeLiquidity(from: @BltUsdtSwapPair.Vault): @BltUsdtSwapPair.TokenBundle {
-    pre {
-      !BltUsdtSwapPair.proxyOnly(): "BltUsdtSwapPair is proxyOnly"
-    }
-
-    return <- BltUsdtSwapPair._removeLiquidity(from: <-from)
-  }
-
   init() {
     self.isFrozen = true // frozen until admin unfreezes
     self.totalSupply = 0.0
@@ -473,14 +503,19 @@ pub contract BltUsdtSwapPair: FungibleToken {
     self.TokenPublicBalancePath = /public/bltUsdtFspLpBalance
     self.TokenPublicReceiverPath = /public/bltUsdtFspLpReceiver
 
+    // Create the Vault with the total supply of tokens and save it in storage
+    let vault <- create Vault(balance: self.totalSupply)
+
+    self.account.storage.save(<-vault, to: /storage/bltUsdtFspLpVault)
+
     // Setup internal BloctoToken vault
-    self.token1Vault <- BloctoToken.createEmptyVault() as! @BloctoToken.Vault
+    self.token1Vault <- BloctoToken.createEmptyVault(vaultType: Type<@BloctoToken.Vault>())
 
     // Setup internal TeleportedTetherToken vault
-    self.token2Vault <- TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault
+    self.token2Vault <- TeleportedTetherToken.createEmptyVault(vaultType: Type<@TeleportedTetherToken.Vault>())
 
     let admin <- create Admin()
-    self.account.save(<-admin, to: /storage/bltUsdtPairAdmin)
+    self.account.storage.save(<-admin, to: /storage/bltUsdtPairAdmin)
 
     // Emit an event that shows that the contract was initialized
     emit TokensInitialized(initialSupply: self.totalSupply)

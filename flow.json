@@ -71,7 +71,7 @@
     "BloctoToken": {
       "source": "./contracts/token/BloctoToken.cdc",
       "aliases": {
-        "testnet": "0x6e0797ac987005f5",
+        "testnet": "0x653cfe36d146e7be",
         "mainnet": "0x0f9df91c9121c460",
         "emulator": "0xf8d6e0586b0a20c7"
       }
@@ -144,12 +144,8 @@
       "key": "eb4347b08ebd2f74d38bec1026b07430fe04510c95afe8534735677a3410dd87"
     },
     "blt-admin-testnet": {
-			"address": "6e0797ac987005f5",
-			"key": {
-				"type": "hex",
-				"signatureAlgorithm": "ECDSA_secp256k1",
-				"privateKey": "2a7dff7b7e222213088682580b980e72b25c5a045324ce19a1f59a49b1512014"
-			}
+			"address": "0x653cfe36d146e7be",
+			"key": "600c63b7dd45898b8411d9e2d2717987bbadda02aa10e9cd29f49ebe6d8ed047"
 		},
     "flow-swap-admin-testnet": {
       "address": "0x95c5ae7e2a9c29ac",
@@ -195,6 +191,7 @@
     "testnet": {
       "flow-swap-admin-testnet": [
         "FlowSwapPair",
+        "BltUsdtSwapPair",
         "StarlyUsdtSwapPair"
       ],
       "tusdt-admin-testnet": [
