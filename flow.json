@@ -1,23 +1,19 @@
 {
-  "emulators": {
-    "default": {
-      "port": 3569,
-      "serviceAccount": "emulator-account"
-    }
-  },
   "contracts": {
     "BloctoToken": {
       "source": "./contracts/token/BloctoToken.cdc",
       "aliases": {
         "testnet": "0x6e0797ac987005f5",
-        "mainnet": "0x0f9df91c9121c460"
+        "mainnet": "0x0f9df91c9121c460",
+        "emulator": "0xf8d6e0586b0a20c7"
       }
     },
     "BltUsdtSwapPair": {
       "source": "./contracts/exchange/BltUsdtSwapPair.cdc",
       "aliases": {
         "testnet": "0xc59604d4e65f14b3",
-        "mainnet": "0xfcb06a5ae5b21a2d"
+        "mainnet": "0xfcb06a5ae5b21a2d",
+        "emulator": "0xf8d6e0586b0a20c7"
       }
     },
     "FungibleToken": {
@@ -32,90 +28,55 @@
       "source": "./contracts/exchange/FlowSwapPair.cdc",
       "aliases": {
         "testnet": "0xd9854329b7edf136",
-        "mainnet": "0xc6c77b9f5c7a378f"
+        "mainnet": "0xc6c77b9f5c7a378f",
+        "emulator": "0xf8d6e0586b0a20c7"
       }
     },
     "FlowToken": {
       "source": "./contracts/token/FlowToken.cdc",
       "aliases": {
         "testnet": "0x7e60df042a9c0868",
-        "mainnet": "0x1654653399040a61"
-      }
-    },
-    "FiatToken": {
-      "source": "./contracts/token/FiatToken.cdc",
-      "aliases": {
-        "mainnet": "0xb19436aae4d94622",
-        "testnet": "0xa983fecbed621163"
-      }
-    },
-    "FUSD": {
-      "source": "./contracts/token/FUSD.cdc",
-      "aliases": {
-        "testnet": "0xe223d8a629e49c68",
-        "mainnet": "0x3c5959b568896393"
-      }
-    },
-    "FusdUsdtSwapPair": {
-      "source": "./contracts/exchange/FusdUsdtSwapPair.cdc",
-      "aliases": {
-        "mainnet": "0x87f3f233f34b0733",
-        "testnet": "0x3502a5dacaf350bb"
+        "mainnet": "0x1654653399040a61",
+        "emulator": "0xf8d6e0586b0a20c7"
       }
     },
     "REVV": {
       "source": "./contracts/token/REVV.cdc",
       "aliases": {
         "testnet": "0x14ca72fa4d45d2c3",
-        "mainnet": "0xd01e482eb680ec9f"
+        "mainnet": "0xd01e482eb680ec9f",
+        "emulator": "0xf8d6e0586b0a20c7"
       }
     },
     "RevvFlowSwapPair": {
       "source": "./contracts/exchange/RevvFlowSwapPair.cdc",
       "aliases": {
-        "mainnet": "0x5e284fb7cff23a3f"
-      }
-    },
-    "SprtUsdtSwapPair": {
-      "source": "./contracts/exchange/SprtUsdtSwapPair.cdc",
-      "aliases": {
-        "mainnet": "0x60e1db11f37ac469",
-        "testnet": "0x0f5be7fc963db41b"
+        "mainnet": "0x5e284fb7cff23a3f",
+        "emulator": "0xf8d6e0586b0a20c7"
       }
     },
     "StarlyUsdtSwapPair": {
       "source": "./contracts/exchange/StarlyUsdtSwapPair.cdc",
       "aliases": {
         "mainnet": "0x6efab66df92c37e4",
-        "testnet": "0x22d84efc93a8b21a"
+        "testnet": "0x22d84efc93a8b21a",
+        "emulator": "0xf8d6e0586b0a20c7"
       }
     },
     "StarlyToken": {
       "source": "./contracts/token/StarlyToken.cdc",
       "aliases": {
         "testnet": "0xf63219072aaddd50",
-        "mainnet": "0x142fa6570b62fd97"
-      }
-    },
-    "TeleportedSportiumToken": {
-      "source": "./contracts/token/TeleportedSportiumToken.cdc",
-      "aliases": {
-        "testnet": "0xb097866d87d01550",
-        "mainnet": "0x475755d2c9dccc3a"
+        "mainnet": "0x142fa6570b62fd97",
+        "emulator": "0xf8d6e0586b0a20c7"
       }
     },
     "TeleportedTetherToken": {
       "source": "./contracts/token/TeleportedTetherToken.cdc",
       "aliases": {
         "testnet": "0xab26e0a07d770ec1",
-        "mainnet": "0xcfdd90d4a00f7b5b"
-      }
-    },
-    "UsdcUsdtSwapPair": {
-      "source": "./contracts/exchange/UsdcUsdtSwapPair.cdc",
-      "aliases": {
-        "mainnet": "0x9c6f94adf47904b5",
-        "testnet": "0x481744401ea249c0"
+        "mainnet": "0xcfdd90d4a00f7b5b",
+        "emulator": "0xf8d6e0586b0a20c7"
       }
     }
   },
@@ -127,61 +88,40 @@
   "accounts": {
     "emulator-account": {
       "address": "f8d6e0586b0a20c7",
-      "keys": "eb4347b08ebd2f74d38bec1026b07430fe04510c95afe8534735677a3410dd87",
-      "chain": "flow-emulator"
+      "key": "eb4347b08ebd2f74d38bec1026b07430fe04510c95afe8534735677a3410dd87"
     },
-    "usdc-swap-admin-testnet": {
-      "fromFile": "./flow.testnet.json"
+    "flow-swap-admin-testnet": {
+      "address": "0xd017f81bffc9aa05",
+      "key": {
+        "type": "file",
+        "index": 0,
+        "signatureAlgorithm": "ECDSA_secp256k1",
+        "hashAlgorithm": "SHA3_256",
+        "location": "./keys/flow-swap-admin-testnet.key"
+      }
     },
-    "swap-admin-testnet": {
-      "fromFile": "./flow.testnet.json"
-    },
-    "sprt-usdt-swap-admin-testnet": {
-      "fromFile": "./flow.testnet.json"
-    },
-    "starly-flow-swap-admin-testnet": {
-      "fromFile": "./flow.testnet.json"
-    },
-    "starly-usdt-swap-admin-testnet": {
-      "fromFile": "./flow.testnet.json"
-    },
-    "usdc-usdt-swap-admin-mainnet": {
-      "fromFile": "./flow.mainnet.json"
-    },
-    "fusd-usdt-swap-admin-mainnet": {
-      "fromFile": "./flow.mainnet.json"
-    },
-    "revv-flow-swap-admin-mainnet": {
-      "fromFile": "./flow.mainnet.json"
-    },
-    "sprt-usdt-swap-admin-mainnet": {
-      "fromFile": "./flow.mainnet.json"
-    },
-    "starly-usdt-swap-admin-mainnet": {
-      "fromFile": "./flow.mainnet.json"
+    "flow-swap-admin-mainnet": {
+      "address": "0x9c6f94adf47904b5",
+      "key": {
+        "type": "file",
+        "location": "./keys/flow-swap-admin-mainnet.key"
+      }
     }
   },
   "deployments": {
+    "emulator": {
+      "emulator-account": [
+        "FlowSwapPair"
+      ]
+    },
     "testnet": {
-      "swap-admin-testnet": [
-        "RevvFlowSwapPair"
-      ],
-      "usdc-swap-admin-testnet": [
-        "UsdcUsdtSwapPair"
-      ],
-      "sprt-usdt-swap-admin-testnet": [
-        "SprtUsdtSwapPair"
-      ],
-      "starly-usdt-swap-admin-testnet": [
-        "StarlyUsdtSwapPair"
+      "flow-swap-admin-testnet": [
+        "FlowSwapPair"
       ]
     },
     "mainnet": {
-      "usdc-usdt-swap-admin-mainnet": [
-        "UsdcUsdtSwapPair"
-      ],
-      "fusd-usdt-swap-admin-mainnet": [
-        "FusdUsdtSwapPair"
+      "flow-swap-admin-mainnet": [
+        "FlowSwapPair"
       ]
     }
   }
