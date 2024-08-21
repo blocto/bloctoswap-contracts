@@ -148,6 +148,9 @@
     "usdc-usdt-swap-admin-mainnet": {
       "fromFile": "./flow.mainnet.json"
     },
+    "fusd-usdt-swap-admin-mainnet": {
+      "fromFile": "./flow.mainnet.json"
+    },
     "revv-flow-swap-admin-mainnet": {
       "fromFile": "./flow.mainnet.json"
     },
@@ -171,6 +174,14 @@
       ],
       "starly-usdt-swap-admin-testnet": [
         "StarlyUsdtSwapPair"
+      ]
+    },
+    "mainnet": {
+      "usdc-usdt-swap-admin-mainnet": [
+        "UsdcUsdtSwapPair"
+      ],
+      "fusd-usdt-swap-admin-mainnet": [
+        "FusdUsdtSwapPair"
       ]
     }
   }
