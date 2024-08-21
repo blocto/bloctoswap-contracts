@@ -79,7 +79,7 @@
     "BltUsdtSwapPair": {
       "source": "./contracts/exchange/BltUsdtSwapPair.cdc",
       "aliases": {
-        "testnet": "0xc59604d4e65f14b3",
+        "testnet": "0x95c5ae7e2a9c29ac",
         "mainnet": "0xfcb06a5ae5b21a2d",
         "emulator": "0xf8d6e0586b0a20c7"
       }
@@ -103,6 +103,7 @@
     "RevvFlowSwapPair": {
       "source": "./contracts/exchange/RevvFlowSwapPair.cdc",
       "aliases": {
+        "testnet": "0x95c5ae7e2a9c29ac",
         "mainnet": "0x5e284fb7cff23a3f",
         "emulator": "0xf8d6e0586b0a20c7"
       }
@@ -110,8 +111,8 @@
     "StarlyUsdtSwapPair": {
       "source": "./contracts/exchange/StarlyUsdtSwapPair.cdc",
       "aliases": {
+        "testnet": "0x95c5ae7e2a9c29ac",
         "mainnet": "0x6efab66df92c37e4",
-        "testnet": "0x22d84efc93a8b21a",
         "emulator": "0xf8d6e0586b0a20c7"
       }
     },
@@ -175,10 +176,39 @@
       }
     },
     "flow-swap-admin-mainnet": {
-      "address": "0x9c6f94adf47904b5",
+      "address": "0xc6c77b9f5c7a378f",
       "key": {
         "type": "file",
+        "signatureAlgorithm": "ECDSA_secp256k1",
+        "hashAlgorithm": "SHA3_256",
         "location": "./keys/flow-swap-admin-mainnet.key"
+      }
+    },
+    "blt-usdt-swap-admin-mainnet": {
+      "address": "0xfcb06a5ae5b21a2d",
+      "key": {
+        "type": "file",
+        "signatureAlgorithm": "ECDSA_secp256k1",
+        "hashAlgorithm": "SHA3_256",
+        "location": "./keys/blt-usdt-swap-admin-mainnet.key"
+      }
+    },
+    "revv-flow-swap-admin-mainnet": {
+      "address": "0x5e284fb7cff23a3f",
+      "key": {
+        "type": "file",
+        "signatureAlgorithm": "ECDSA_secp256k1",
+        "hashAlgorithm": "SHA3_256",
+        "location": "./keys/revv-flow-swap-admin-mainnet.key"
+      }
+    },
+    "starly-usdt-swap-admin-mainnet": {
+      "address": "0x6efab66df92c37e4",
+      "key": {
+        "type": "file",
+        "signatureAlgorithm": "ECDSA_secp256k1",
+        "hashAlgorithm": "SHA3_256",
+        "location": "./keys/starly-usdt-swap-admin-mainnet.key"
       }
     }
   },
@@ -189,6 +219,9 @@
       ]
     },
     "testnet": {
+      "blt-admin-testnet": [
+        "BloctoToken"
+      ],
       "flow-swap-admin-testnet": [
         "FlowSwapPair",
         "BltUsdtSwapPair",
@@ -200,8 +233,16 @@
     },
     "mainnet": {
       "flow-swap-admin-mainnet": [
-        "FlowSwapPair",
-        "TeleportedTetherToken"
+        "FlowSwapPair"
+      ],
+      "blt-usdt-swap-admin-mainnet": [
+        "BltUsdtSwapPair"
+      ],
+      "revv-flow-swap-admin-mainnet": [
+        "RevvFlowSwapPair"
+      ],
+      "starly-usdt-swap-admin-mainnet": [
+        "StarlyUsdtSwapPair"
       ]
     }
   }

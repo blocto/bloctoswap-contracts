@@ -232,7 +232,7 @@ contract BloctoToken: FungibleToken{
     // account to be able to receive deposits of this token type.
     //
     access(all)
-    fun createEmptyVault(vaultType: Type): @{FungibleToken.Vault}{ 
+    fun createEmptyVault(vaultType: Type): @BloctoToken.Vault{ 
         return <-create Vault(balance: 0.0)
     }
     

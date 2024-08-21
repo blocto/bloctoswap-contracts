@@ -509,9 +509,6 @@ contract FlowSwapPair: FungibleToken {
 
     self.account.storage.save(<-vault, to: /storage/flowUsdtFspLpVault)
 
-    let admin <- create Administrator()
-    self.account.storage.save(<-admin, to: /storage/flowTokenAdmin)
-
     // Setup internal FlowToken vault
     self.token1Vault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>())
 
