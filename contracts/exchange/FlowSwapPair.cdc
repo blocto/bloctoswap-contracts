@@ -1,6 +1,7 @@
 import "FungibleToken"
 import "FlowToken"
 import "TeleportedTetherToken"
+import "MetadataViews"
 import "FungibleTokenMetadataViews"
 
 // Exchange pair between FlowToken and TeleportedTetherToken
@@ -55,6 +56,63 @@ contract FlowSwapPair: FungibleToken {
   // Side 2: from token2 to token1
   access(all) event Trade(token1Amount: UFix64, token2Amount: UFix64, side: UInt8)
 
+  /// Gets a list of the metadata views that this contract supports
+  access(all) view fun getContractViews(resourceType: Type?): [Type] {
+    return [Type<FungibleTokenMetadataViews.FTView>(),
+            Type<FungibleTokenMetadataViews.FTDisplay>(),
+            Type<FungibleTokenMetadataViews.FTVaultData>(),
+            Type<FungibleTokenMetadataViews.TotalSupply>()]
+  }
+
+  /// Get a Metadata View
+  ///
+  /// @param view: The Type of the desired view.
+  /// @return A structure representing the requested view.
+  ///
+  access(all) fun resolveContractView(resourceType: Type?, viewType: Type): AnyStruct? {
+    switch viewType {
+      case Type<FungibleTokenMetadataViews.FTView>():
+        return FungibleTokenMetadataViews.FTView(
+          ftDisplay: self.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTDisplay>()) as! FungibleTokenMetadataViews.FTDisplay?,
+          ftVaultData: self.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTVaultData>()) as! FungibleTokenMetadataViews.FTVaultData?
+        )
+      case Type<FungibleTokenMetadataViews.FTDisplay>():
+        let media = MetadataViews.Media(
+            file: MetadataViews.HTTPFile(
+            url: "https://swap.blocto.app/favicon-144x144.png"
+          ),
+          mediaType: "image/png"
+        )
+        let medias = MetadataViews.Medias([media])
+        return FungibleTokenMetadataViews.FTDisplay(
+          name: "FLOW/tUSDT Swap LP Token",
+          symbol: "FLOWUSDT",
+          description: "BloctoSwap liquidity provider token for the FLOW/tUSDT swap pair.",
+          externalURL: MetadataViews.ExternalURL("https://swap.blocto.app"),
+          logos: medias,
+          socials: {
+            "twitter": MetadataViews.ExternalURL("https://x.com/bloctoapp")
+          }
+        )
+      case Type<FungibleTokenMetadataViews.FTVaultData>():
+        let vaultRef = FlowSwapPair.account.storage.borrow<auth(FungibleToken.Withdraw) &FlowSwapPair.Vault>(from: /storage/flowUsdtFspLpVault)
+        ?? panic("Could not borrow reference to the contract's Vault!")
+          return FungibleTokenMetadataViews.FTVaultData(
+            storagePath: /storage/flowUsdtFspLpVault,
+            receiverPath: /public/flowUsdtFspLpReceiver,
+            metadataPath: /public/flowUsdtFspLpBalance,
+            receiverLinkedType: Type<&{FungibleToken.Receiver, FungibleToken.Vault}>(),
+            metadataLinkedType: Type<&{FungibleToken.Balance, FungibleToken.Vault}>(),
+            createEmptyVaultFunction: (fun (): @{FungibleToken.Vault} {
+              return <-vaultRef.createEmptyVault()
+            })
+          )
+      case Type<FungibleTokenMetadataViews.TotalSupply>():
+          return FungibleTokenMetadataViews.TotalSupply(totalSupply: FlowSwapPair.totalSupply)
+    }
+    return nil
+  }
+
   // Vault
   //
   // Each user stores an instance of only the Vault in their storage
@@ -81,7 +139,7 @@ contract FlowSwapPair: FungibleToken {
     // Called when a fungible token is burned via the `Burner.burn()` method
     access(contract) fun burnCallback() {
       if self.balance > 0.0 {
-        BltUsdtSwapPair.totalSupply = BltUsdtSwapPair.totalSupply - self.balance
+        FlowSwapPair.totalSupply = FlowSwapPair.totalSupply - self.balance
       }
       self.balance = 0.0
     }
@@ -108,7 +166,7 @@ contract FlowSwapPair: FungibleToken {
     // created Vault to the context that called so it can be deposited
     // elsewhere.
     //
-    access(FungibleToken.Withdraw) fun withdraw(amount: UFix64): @FungibleToken.Vault {
+    access(FungibleToken.Withdraw) fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
       self.balance = self.balance - amount
       emit TokensWithdrawn(amount: amount, from: self.owner?.address)
       return <-create Vault(balance: amount)
@@ -121,8 +179,8 @@ contract FlowSwapPair: FungibleToken {
     // It is allowed to destroy the sent Vault because the Vault
     // was a temporary holder of the tokens. The Vault's balance has
     // been consumed and therefore can be destroyed.
-    access(all) fun deposit(from: @FungibleToken.Vault) {
-      let vault <- from as! @BltUsdtSwapPair.Vault
+    access(all) fun deposit(from: @{FungibleToken.Vault}) {
+      let vault <- from as! @FlowSwapPair.Vault
       self.balance = self.balance + vault.balance
       emit TokensDeposited(amount: vault.balance, to: self.owner?.address)
       vault.balance = 0.0
@@ -135,7 +193,7 @@ contract FlowSwapPair: FungibleToken {
     //         developers to know which parameter to pass to the resolveView() method.
     //
     access(all) view fun getViews(): [Type]{
-        return BltUsdtSwapPair.getContractViews(resourceType: nil)
+        return FlowSwapPair.getContractViews(resourceType: nil)
     }
 
     // Get a Metadata View
@@ -144,68 +202,11 @@ contract FlowSwapPair: FungibleToken {
     // @return A structure representing the requested view.
     //
     access(all) fun resolveView(_ view: Type): AnyStruct? {
-        return BltUsdtSwapPair.resolveContractView(resourceType: nil, viewType: view)
+        return FlowSwapPair.resolveContractView(resourceType: nil, viewType: view)
     }
 
     access(all) fun createEmptyVault(): @{FungibleToken.Vault}{ 
       return <-create Vault(balance: 0.0)
-    }
-
-    /// Gets a list of the metadata views that this contract supports
-    access(all) view fun getContractViews(resourceType: Type?): [Type] {
-      return [Type<FungibleTokenMetadataViews.FTView>(),
-              Type<FungibleTokenMetadataViews.FTDisplay>(),
-              Type<FungibleTokenMetadataViews.FTVaultData>(),
-              Type<FungibleTokenMetadataViews.TotalSupply>()]
-    }
-
-    /// Get a Metadata View
-    ///
-    /// @param view: The Type of the desired view.
-    /// @return A structure representing the requested view.
-    ///
-    access(all) fun resolveContractView(resourceType: Type?, viewType: Type): AnyStruct? {
-      switch viewType {
-        case Type<FungibleTokenMetadataViews.FTView>():
-          return FungibleTokenMetadataViews.FTView(
-            ftDisplay: self.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTDisplay>()) as! FungibleTokenMetadataViews.FTDisplay?,
-            ftVaultData: self.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTVaultData>()) as! FungibleTokenMetadataViews.FTVaultData?
-          )
-        case Type<FungibleTokenMetadataViews.FTDisplay>():
-          let media = MetadataViews.Media(
-              file: MetadataViews.HTTPFile(
-              url: "https://swap.blocto.app/favicon-144x144.png"
-            ),
-            mediaType: "image/png"
-          )
-          let medias = MetadataViews.Medias([media])
-          return FungibleTokenMetadataViews.FTDisplay(
-            name: "FLOW/tUSDT Swap LP Token",
-            symbol: "FLOWUSDT",
-            description: "BloctoSwap liquidity provider token for the FLOW/tUSDT swap pair.",
-            externalURL: MetadataViews.ExternalURL("https://swap.blocto.app"),
-            logos: medias,
-            socials: {
-              "twitter": MetadataViews.ExternalURL("https://x.com/bloctoapp")
-            }
-          )
-        case Type<FungibleTokenMetadataViews.FTVaultData>():
-          let vaultRef = FlowSwapPair.account.storage.borrow<auth(FungibleToken.Withdraw) &FlowSwapPair.Vault>(from: /storage/flowUsdtFspLpVault)
-          ?? panic("Could not borrow reference to the contract's Vault!")
-            return FungibleTokenMetadataViews.FTVaultData(
-              storagePath: /storage/flowUsdtFspLpVault,
-              receiverPath: /public/flowUsdtFspLpReceiver,
-              metadataPath: /public/flowUsdtFspLpBalance,
-              receiverLinkedType: Type<&{FungibleToken.Receiver, FungibleToken.Vault}>(),
-              metadataLinkedType: Type<&{FungibleToken.Balance, FungibleToken.Vault}>(),
-              createEmptyVaultFunction: (fun (): @{FungibleToken.Vault} {
-                return <-vaultRef.createEmptyVault()
-              })
-            )
-        case Type<FungibleTokenMetadataViews.TotalSupply>():
-            return FungibleTokenMetadataViews.TotalSupply(totalSupply: FlowSwapPair.totalSupply)
-      }
-      return nil
     }
   }
 
@@ -216,7 +217,7 @@ contract FlowSwapPair: FungibleToken {
   // and store the returned Vault in their storage in order to allow their
   // account to be able to receive deposits of this token type.
   //
-  access(all) fun createEmptyVault(): @FungibleToken.Vault {
+  access(all) fun createEmptyVault(vaultType: Type): @FlowSwapPair.Vault {
     return <-create Vault(balance: 0.0)
   }
 
@@ -231,21 +232,21 @@ contract FlowSwapPair: FungibleToken {
     }
 
     access(all) fun depositToken1(from: @FlowToken.Vault) {
-      self.token1.deposit(from: <- (from as! @FungibleToken.Vault))
+      self.token1.deposit(from: <- (from as! @{FungibleToken.Vault}))
     }
 
     access(all) fun depositToken2(from: @TeleportedTetherToken.Vault) {
-      self.token2.deposit(from: <- (from as! @FungibleToken.Vault))
+      self.token2.deposit(from: <- (from as! @{FungibleToken.Vault}))
     }
 
     access(all) fun withdrawToken1(): @FlowToken.Vault {
-      var vault <- FlowToken.createEmptyVault() as! @FlowToken.Vault
+      var vault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>())
       vault <-> self.token1
       return <- vault
     }
 
     access(all) fun withdrawToken2(): @TeleportedTetherToken.Vault {
-      var vault <- TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault
+      var vault <- TeleportedTetherToken.createEmptyVault(vaultType: Type<@TeleportedTetherToken.Vault>())
       vault <-> self.token2
       return <- vault
     }
@@ -255,8 +256,8 @@ contract FlowSwapPair: FungibleToken {
   //
   access(all) fun createEmptyTokenBundle(): @FlowSwapPair.TokenBundle {
     return <- create TokenBundle(
-      fromToken1: <- (FlowToken.createEmptyVault() as! @FlowToken.Vault),
-      fromToken2: <- (TeleportedTetherToken.createEmptyVault() as! @TeleportedTetherToken.Vault)
+      fromToken1: <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>()),
+      fromToken2: <- TeleportedTetherToken.createEmptyVault(vaultType: Type<@TeleportedTetherToken.Vault>())
     )
   }
 
@@ -407,7 +408,7 @@ contract FlowSwapPair: FungibleToken {
 
     assert(token2Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+    self.token1Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
 
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
@@ -427,7 +428,7 @@ contract FlowSwapPair: FungibleToken {
 
     assert(token1Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+    self.token2Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
 
     return <- (self.token1Vault.withdraw(amount: token1Amount) as! @FlowToken.Vault)
@@ -504,6 +505,14 @@ contract FlowSwapPair: FungibleToken {
     self.TokenPublicBalancePath = /public/flowUsdtFspLpBalance
     self.TokenPublicReceiverPath = /public/flowUsdtFspLpReceiver
 
+    // Create the Vault with the total supply of tokens and save it in storage
+    let vault <- create Vault(balance: self.totalSupply)
+
+    self.account.storage.save(<-vault, to: /storage/flowUsdtFspLpVault)
+
+    let admin <- create Administrator()
+    self.account.storage.save(<-admin, to: /storage/flowTokenAdmin)
+
     // Setup internal FlowToken vault
     self.token1Vault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>())
 
@@ -511,7 +520,7 @@ contract FlowSwapPair: FungibleToken {
     self.token2Vault <- TeleportedTetherToken.createEmptyVault(vaultType: Type<@TeleportedTetherToken.Vault>())
 
     let admin <- create Admin()
-    self.account.save(<-admin, to: /storage/flowSwapPairAdmin)
+    self.account.storage.save(<-admin, to: /storage/flowSwapPairAdmin)
 
     // Emit an event that shows that the contract was initialized
     emit TokensInitialized(initialSupply: self.totalSupply)

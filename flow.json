@@ -79,7 +79,7 @@
     "FlowSwapPair": {
       "source": "./contracts/exchange/FlowSwapPair.cdc",
       "aliases": {
-        "testnet": "0xd9854329b7edf136",
+        "testnet": "0x95c5ae7e2a9c29ac",
         "mainnet": "0xc6c77b9f5c7a378f",
         "emulator": "0xf8d6e0586b0a20c7"
       }
@@ -118,7 +118,7 @@
     "TeleportedTetherToken": {
       "source": "./contracts/token/TeleportedTetherToken.cdc",
       "aliases": {
-        "testnet": "0xab26e0a07d770ec1",
+        "testnet": "0x2d270db9ac8c7fef",
         "mainnet": "0xcfdd90d4a00f7b5b",
         "emulator": "0xf8d6e0586b0a20c7"
       }
@@ -136,13 +136,31 @@
       "key": "eb4347b08ebd2f74d38bec1026b07430fe04510c95afe8534735677a3410dd87"
     },
     "flow-swap-admin-testnet": {
-      "address": "0xd017f81bffc9aa05",
+      "address": "0x95c5ae7e2a9c29ac",
       "key": {
         "type": "file",
         "index": 0,
         "signatureAlgorithm": "ECDSA_secp256k1",
         "hashAlgorithm": "SHA3_256",
         "location": "./keys/flow-swap-admin-testnet.key"
+      }
+    },
+    "tusdt-admin-testnet": {
+			"address": "0x2d270db9ac8c7fef",
+			"key": "c5d43c4fc59584a4f4e41a8ef40772d0a7d89b2894f80d68a7cab42c34ebb29f"
+		},
+    "tusdt-teleport-admin-testnet": {
+			"address": "0xc26a86fd71f30119",
+			"key": "83c686f118f814f4b4cf607ca10c2fabd084078b06f0d72d4364e3a19a6996d4"
+		},
+    "user-testnet": {
+      "address": "0x67f67290a2622312",
+      "key": {
+        "type": "hex",
+        "index": 0,
+        "signatureAlgorithm": "ECDSA_secp256k1",
+        "hashAlgorithm": "SHA3_256",
+        "privateKey": "fc2b272db5888de150d3de1919307321e291915eb8df04f251a9d683e07747b7"
       }
     },
     "flow-swap-admin-mainnet": {
@@ -162,11 +180,15 @@
     "testnet": {
       "flow-swap-admin-testnet": [
         "FlowSwapPair"
+      ],
+      "tusdt-admin-testnet": [
+        "TeleportedTetherToken"
       ]
     },
     "mainnet": {
       "flow-swap-admin-mainnet": [
-        "FlowSwapPair"
+        "FlowSwapPair",
+        "TeleportedTetherToken"
       ]
     }
   }
