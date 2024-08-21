@@ -84,7 +84,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
     // created Vault to the context that called so it can be deposited
     // elsewhere.
     //
-    pub fun withdraw(amount: UFix64): @FungibleToken.Vault {
+    pub fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
       self.balance = self.balance - amount
       emit TokensWithdrawn(amount: amount, from: self.owner?.address)
       return <-create Vault(balance: amount)
@@ -97,7 +97,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
     // It is allowed to destroy the sent Vault because the Vault
     // was a temporary holder of the tokens. The Vault's balance has
     // been consumed and therefore can be destroyed.
-    pub fun deposit(from: @FungibleToken.Vault) {
+    pub fun deposit(from: @{FungibleToken.Vault}) {
       let vault <- from as! @BltUsdtSwapPair.Vault
       self.balance = self.balance + vault.balance
       emit TokensDeposited(amount: vault.balance, to: self.owner?.address)
@@ -117,7 +117,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
   // and store the returned Vault in their storage in order to allow their
   // account to be able to receive deposits of this token type.
   //
-  pub fun createEmptyVault(): @FungibleToken.Vault {
+  pub fun createEmptyVault(): @{FungibleToken.Vault} {
     return <-create Vault(balance: 0.0)
   }
 
@@ -132,11 +132,11 @@ pub contract BltUsdtSwapPair: FungibleToken {
     }
 
     pub fun depositToken1(from: @BloctoToken.Vault) {
-      self.token1.deposit(from: <- (from as! @FungibleToken.Vault))
+      self.token1.deposit(from: <- (from as! @{FungibleToken.Vault}))
     }
 
     pub fun depositToken2(from: @TeleportedTetherToken.Vault) {
-      self.token2.deposit(from: <- (from as! @FungibleToken.Vault))
+      self.token2.deposit(from: <- (from as! @{FungibleToken.Vault}))
     }
 
     pub fun withdrawToken1(): @BloctoToken.Vault {
@@ -344,7 +344,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
 
     assert(token2Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token1Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+    self.token1Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
 
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
@@ -372,7 +372,7 @@ pub contract BltUsdtSwapPair: FungibleToken {
 
     assert(token1Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token2Vault.deposit(from: <- (from as! @FungibleToken.Vault))
+    self.token2Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
 
     return <- (self.token1Vault.withdraw(amount: token1Amount) as! @BloctoToken.Vault)

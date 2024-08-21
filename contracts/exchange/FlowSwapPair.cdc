@@ -128,8 +128,7 @@ contract FlowSwapPair: FungibleToken {
   access(all) resource Vault: FungibleToken.Vault {
 
     // holds the balance of a users tokens
-    access(all)
-    var balance: UFix64
+    access(all) var balance: UFix64
 
     // initialize the balance at resource creation time
     init(balance: UFix64) {
