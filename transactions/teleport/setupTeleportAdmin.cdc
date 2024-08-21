@@ -1,29 +1,20 @@
-import FungibleToken from 0xFUNGIBLETOKENADDRESS
-import TeleportedTetherToken from 0xTOKENADDRESS
+import "FungibleToken"
+import "TeleportedTetherToken"
 
-transaction {
-  prepare(admin: AuthAccount, teleportAdmin: AuthAccount) {
+transaction(allowedAmount: UFix64) {
 
-    let adminRef = admin.borrow<&TeleportedTetherToken.Administrator>(from: /storage/teleportedTetherTokenAdmin)
-        ?? panic("Could not borrow a reference to the admin resource")
+  prepare(admin: auth(BorrowValue) &Account, teleportAdmin: auth(SaveValue, LoadValue, Capabilities) &Account) {
 
-    let teleportAdminRes <- adminRef.createNewTeleportAdmin()
+    let adminRef = admin.storage.borrow<auth(TeleportedTetherToken.AdministratorEntitlement) &TeleportedTetherToken.Administrator>(from: /storage/teleportedTetherTokenAdmin)
+      ?? panic("Could not borrow a reference to the admin resource")
 
-    teleportAdmin.save(<- teleportAdminRes, to: /storage/teleportedTetherTokenTeleportAdmin)
+    let teleportAdminRes <- adminRef.createNewTeleportAdmin(allowedAmount: allowedAmount)
 
-    teleportAdmin.link<&TeleportedTetherToken.TeleportAdmin{TeleportedTetherToken.TeleportIn}>(
-      /private/teleportedTetherTokenTeleportIn,
-      target: /storage/teleportedTetherTokenTeleportAdmin
-    )
+    destroy teleportAdmin.storage.load<@TeleportedTetherToken.TeleportAdmin>(from: /storage/teleportedTetherTokenTeleportAdmin)
+    let cap = teleportAdmin.capabilities.unpublish(/public/teleportedTetherTokenTeleportUser)
+    teleportAdmin.storage.save(<- teleportAdminRes, to: /storage/teleportedTetherTokenTeleportAdmin)
 
-    teleportAdmin.link<&TeleportedTetherToken.TeleportAdmin{TeleportedTetherToken.TeleportOut}>(
-      /public/teleportedTetherTokenTeleportOut,
-      target: /storage/teleportedTetherTokenTeleportAdmin
-    )
-
-    teleportAdmin.link<&TeleportedTetherToken.TeleportAdmin{TeleportedTetherToken.TeleportConfig}>(
-      /private/teleportedTetherTokenTeleportConfig,
-      target: /storage/teleportedTetherTokenTeleportAdmin
-    )
+    let teleportUserCap = teleportAdmin.capabilities.storage.issue<&{TeleportedTetherToken.TeleportUser}>(/storage/teleportedTetherTokenTeleportAdmin)
+    teleportAdmin.capabilities.publish(teleportUserCap, at: /public/teleportedTetherTokenTeleportUser)
   }
 }
