@@ -1,130 +1,180 @@
-import FungibleToken from "./FungibleToken.cdc"
+import "FungibleToken"
+import "MetadataViews"
+import "FungibleTokenMetadataViews"
 
-// Token contract of Starly Token (STARLY)
-pub contract StarlyToken: FungibleToken {
+access(all) contract StarlyToken: FungibleToken {
+    access(all) var totalSupply: UFix64
 
-    // Total supply of Flow tokens in existence
-    pub var totalSupply: UFix64
+    access(all) let TokenStoragePath: StoragePath
+    access(all) let TokenPublicBalancePath: PublicPath
+    access(all) let TokenPublicReceiverPath: PublicPath
 
-    // Defines token vault storage path
-    pub let TokenStoragePath: StoragePath
+    access(all) event TokensMinted(amount: UFix64, type: String)
 
-    // Defines token vault public balance path
-    pub let TokenPublicBalancePath: PublicPath
+    access(all) view fun getContractViews(resourceType: Type?): [Type] {
+        return [
+            Type<FungibleTokenMetadataViews.FTView>(),
+            Type<FungibleTokenMetadataViews.FTDisplay>(),
+            Type<FungibleTokenMetadataViews.FTVaultData>(),
+            Type<FungibleTokenMetadataViews.TotalSupply>()
+        ]
+    }
 
-    // Defines token vault public receiver path
-    pub let TokenPublicReceiverPath: PublicPath
+    access(all) fun resolveContractView(resourceType: Type?, viewType: Type): AnyStruct? {
+        switch viewType {
+            case Type<FungibleTokenMetadataViews.FTView>():
+                return FungibleTokenMetadataViews.FTView(
+                    ftDisplay: self.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTDisplay>()) as! FungibleTokenMetadataViews.FTDisplay?,
+                    ftVaultData: self.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTVaultData>()) as! FungibleTokenMetadataViews.FTVaultData?
+                )
+            case Type<FungibleTokenMetadataViews.FTDisplay>():
+                let media = MetadataViews.Media(
+                        file: MetadataViews.HTTPFile(
+                        url: "https://storage.googleapis.com/starly-prod.appspot.com/assets/starly-icon-black.png"
+                    ),
+                    mediaType: "image/png"
+                )
+                let medias = MetadataViews.Medias([media])
+                return FungibleTokenMetadataViews.FTDisplay(
+                    name: "Starly Token",
+                    symbol: "STARLY",
+                    description: "STARLY is a utility token which serves as a medium to offer creators, collectors and the surrounding communities the ultimate experience on Starly ecosystem.",
+                    externalURL: MetadataViews.ExternalURL("https://starly.io/"),
+                    logos: medias,
+                    socials: {
+                        "twitter": MetadataViews.ExternalURL("https://x.com/StarlyNFT"),
+                        "telegram": MetadataViews.ExternalURL("https://t.me/starlynft")
+                    }
+                )
+            case Type<FungibleTokenMetadataViews.FTVaultData>():
+                return FungibleTokenMetadataViews.FTVaultData(
+                    storagePath: self.TokenStoragePath,
+                    receiverPath: self.TokenPublicReceiverPath,
+                    metadataPath: self.TokenPublicBalancePath,
+                    receiverLinkedType: Type<&StarlyToken.Vault>(),
+                    metadataLinkedType: Type<&StarlyToken.Vault>(),
+                    createEmptyVaultFunction: (fun(): @{FungibleToken.Vault} {
+                        return <-StarlyToken.createEmptyVault(vaultType: Type<@StarlyToken.Vault>())
+                    })
+                )
+            case Type<FungibleTokenMetadataViews.TotalSupply>():
+                return FungibleTokenMetadataViews.TotalSupply(
+                    totalSupply: StarlyToken.totalSupply
+                )
+        }
+        return nil
+    }
 
-    // Event that is emitted when the contract is created
-    pub event TokensInitialized(initialSupply: UFix64)
+    access(all) resource Vault: FungibleToken.Vault {
 
-    // Event that is emitted when tokens are withdrawn from a Vault
-    pub event TokensWithdrawn(amount: UFix64, from: Address?)
-
-    // Event that is emitted when tokens are deposited to a Vault
-    pub event TokensDeposited(amount: UFix64, to: Address?)
-
-    // Event that is emitted when tokens are destroyed
-    pub event TokensBurned(amount: UFix64)
-
-    // Vault
-    //
-    // Each user stores an instance of only the Vault in their storage
-    // The functions in the Vault and governed by the pre and post conditions
-    // in FungibleToken when they are called.
-    // The checks happen at runtime whenever a function is called.
-    //
-    // Resources can only be created in the context of the contract that they
-    // are defined in, so there is no way for a malicious user to create Vaults
-    // out of thin air.
-    //
-    pub resource Vault: FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance {
-
-        // holds the balance of a users tokens
-        pub var balance: UFix64
+        /// The total balance of this vault
+        access(all) var balance: UFix64
 
         // initialize the balance at resource creation time
         init(balance: UFix64) {
             self.balance = balance
         }
 
-        // withdraw
-        //
-        // Function that takes an integer amount as an argument
-        // and withdraws that amount from the Vault.
-        // It creates a new temporary Vault that is used to hold
-        // the money that is being transferred. It returns the newly
-        // created Vault to the context that called so it can be deposited
-        // elsewhere.
-        //
-        pub fun withdraw(amount: UFix64): @FungibleToken.Vault {
+        /// Called when a fungible token is burned via the `Burner.burn()` method
+        access(contract) fun burnCallback() {
+            if self.balance > 0.0 {
+                StarlyToken.totalSupply = StarlyToken.totalSupply - self.balance
+            }
+            self.balance = 0.0
+        }
+
+        access(all) view fun getViews(): [Type] {
+            return StarlyToken.getContractViews(resourceType: nil)
+        }
+
+        access(all) fun resolveView(_ view: Type): AnyStruct? {
+            return StarlyToken.resolveContractView(resourceType: nil, viewType: view)
+        }
+
+        /// getSupportedVaultTypes optionally returns a list of vault types that this receiver accepts
+        access(all) view fun getSupportedVaultTypes(): {Type: Bool} {
+            let supportedTypes: {Type: Bool} = {}
+            supportedTypes[self.getType()] = true
+            return supportedTypes
+        }
+
+        access(all) view fun isSupportedVaultType(type: Type): Bool {
+            return self.getSupportedVaultTypes()[type] ?? false
+        }
+
+        /// Asks if the amount can be withdrawn from this vault
+        access(all) view fun isAvailableToWithdraw(amount: UFix64): Bool {
+            return amount <= self.balance
+        }
+
+        /// withdraw
+        ///
+        /// Function that takes an amount as an argument
+        /// and withdraws that amount from the Vault.
+        ///
+        /// It creates a new temporary Vault that is used to hold
+        /// the tokens that are being transferred. It returns the newly
+        /// created Vault to the context that called so it can be deposited
+        /// elsewhere.
+        ///
+        access(FungibleToken.Withdraw) fun withdraw(amount: UFix64): @StarlyToken.Vault {
             self.balance = self.balance - amount
-            emit TokensWithdrawn(amount: amount, from: self.owner?.address)
             return <-create Vault(balance: amount)
         }
 
-        // deposit
-        //
-        // Function that takes a Vault object as an argument and adds
-        // its balance to the balance of the owners Vault.
-        // It is allowed to destroy the sent Vault because the Vault
-        // was a temporary holder of the tokens. The Vault's balance has
-        // been consumed and therefore can be destroyed.
-        pub fun deposit(from: @FungibleToken.Vault) {
+        /// deposit
+        ///
+        /// Function that takes a Vault object as an argument and adds
+        /// its balance to the balance of the owners Vault.
+        ///
+        /// It is allowed to destroy the sent Vault because the Vault
+        /// was a temporary holder of the tokens. The Vault's balance has
+        /// been consumed and therefore can be destroyed.
+        ///
+        access(all) fun deposit(from: @{FungibleToken.Vault}) {
             let vault <- from as! @StarlyToken.Vault
             self.balance = self.balance + vault.balance
-            emit TokensDeposited(amount: vault.balance, to: self.owner?.address)
             vault.balance = 0.0
             destroy vault
         }
 
-        destroy() {
-            StarlyToken.totalSupply = StarlyToken.totalSupply - self.balance
-            if (self.balance > 0.0) {
-                // Emit an event that shows that the token was burned
-                emit TokensBurned(amount: self.balance)
-            }
+        /// createEmptyVault
+        ///
+        /// Function that creates a new Vault with a balance of zero
+        /// and returns it to the calling context. A user must call this function
+        /// and store the returned Vault in their storage in order to allow their
+        /// account to be able to receive deposits of this token type.
+        ///
+        access(all) fun createEmptyVault(): @StarlyToken.Vault {
+            return <-create Vault(balance: 0.0)
         }
     }
 
-    // createEmptyVault
-    //
-    // Function that creates a new Vault with a balance of zero
-    // and returns it to the calling context. A user must call this function
-    // and store the returned Vault in their storage in order to allow their
-    // account to be able to receive deposits of this token type.
-    //
-    pub fun createEmptyVault(): @FungibleToken.Vault {
-        return <-create Vault(balance: 0.0)
+    /// createEmptyVault
+    ///
+    /// Function that creates a new Vault with a balance of zero
+    /// and returns it to the calling context. A user must call this function
+    /// and store the returned Vault in their storage in order to allow their
+    /// account to be able to receive deposits of this token type.
+    ///
+    access(all) fun createEmptyVault(vaultType: Type): @StarlyToken.Vault {
+        return <- create Vault(balance: 0.0)
     }
 
     init() {
-        // Total supply of STARLY is 100M
         self.totalSupply = 100_000_000.0
 
         self.TokenStoragePath = /storage/starlyTokenVault
+        self.TokenPublicBalancePath = /public/starlyTokenVault
         self.TokenPublicReceiverPath = /public/starlyTokenReceiver
-        self.TokenPublicBalancePath = /public/starlyTokenBalance
 
-        // Create the Vault with the total supply of tokens and save it in storage
         let vault <- create Vault(balance: self.totalSupply)
-        self.account.save(<-vault, to: self.TokenStoragePath)
+        emit TokensMinted(amount: vault.balance, type: vault.getType().identifier)
 
-        // Create a public capability to the stored Vault that only exposes
-        // the `deposit` method through the `Receiver` interface
-        self.account.link<&StarlyToken.Vault{FungibleToken.Receiver}>(
-            self.TokenPublicReceiverPath,
-            target: self.TokenStoragePath
-        )
-
-        // Create a public capability to the stored Vault that only exposes
-        // the `balance` field through the `Balance` interface
-        self.account.link<&StarlyToken.Vault{FungibleToken.Balance}>(
-            self.TokenPublicBalancePath,
-            target: self.TokenStoragePath
-        )
-
-        // Emit an event that shows that the contract was initialized
-        emit TokensInitialized(initialSupply: self.totalSupply)
+        let starlyTokenCap = self.account.capabilities.storage.issue<&StarlyToken.Vault>(self.TokenStoragePath)
+        self.account.capabilities.publish(starlyTokenCap, at: self.TokenPublicBalancePath)
+        let receiverCap = self.account.capabilities.storage.issue<&StarlyToken.Vault>(self.TokenStoragePath)
+        self.account.capabilities.publish(receiverCap, at: self.TokenPublicReceiverPath)
+        self.account.storage.save(<-vault, to: /storage/starlyTokenVault)
     }
 }
