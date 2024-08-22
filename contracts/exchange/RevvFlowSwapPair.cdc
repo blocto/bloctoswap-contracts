@@ -1,6 +1,7 @@
-import FungibleToken from "../token/FungibleToken.cdc"
-import REVV from "../token/REVV.cdc"
-import FlowToken from "../token/FlowToken.cdc"
+import "Burner"
+import "FungibleToken"
+import "REVV"
+import "FlowToken"
 
 // Exchange pair between REVV and FlowToken
 // Token1: REVV
@@ -191,7 +192,7 @@ pub contract RevvFlowSwapPair: FungibleToken {
   access(contract) fun burnTokens(from: @RevvFlowSwapPair.Vault) {
     let vault <- from as! @RevvFlowSwapPair.Vault
     let amount = vault.balance
-    destroy vault
+    Burner.burn(<- vault)
     emit TokensBurned(amount: amount)
   }
 

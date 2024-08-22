@@ -1,3 +1,4 @@
+import "Burner"
 import "FungibleToken"
 import "BloctoToken"
 import "TeleportedTetherToken"
@@ -289,7 +290,7 @@ access(all) contract BltUsdtSwapPair: FungibleToken {
   access(contract) fun burnTokens(from: @BltUsdtSwapPair.Vault) {
     let vault <- from as! @BltUsdtSwapPair.Vault
     let amount = vault.balance
-    destroy vault
+    Burner.burn(<- vault)
     emit TokensBurned(amount: amount)
   }
 

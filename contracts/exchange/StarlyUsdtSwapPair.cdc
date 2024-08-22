@@ -1,3 +1,4 @@
+import "Burner"
 import "FungibleToken"
 import "StarlyToken"
 import "TeleportedTetherToken"
@@ -289,7 +290,7 @@ access(all) contract StarlyUsdtSwapPair: FungibleToken {
   access(contract) fun burnTokens(from: @StarlyUsdtSwapPair.Vault) {
     let vault <- from as! @StarlyUsdtSwapPair.Vault
     let amount = vault.balance
-    destroy vault
+    Burner.burn(<- vault)
     emit TokensBurned(amount: amount)
   }
 

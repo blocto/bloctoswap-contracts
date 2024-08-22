@@ -6,7 +6,8 @@
 			"aliases": {
         "emulator": "0xf8d6e0586b0a20c7",
         "previewnet": "0xa0225e7000ac82a9",
-        "testnet": "0x9a0766d93b6608b7"
+        "testnet": "0x9a0766d93b6608b7",
+        "mainnet": "0xf233dcee88fe0abe"
       }
 		},
 		"FungibleToken": {

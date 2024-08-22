@@ -1,3 +1,4 @@
+import "Burner"
 import "FungibleToken"
 import "FlowToken"
 import "TeleportedTetherToken"
@@ -290,7 +291,7 @@ contract FlowSwapPair: FungibleToken {
   access(contract) fun burnTokens(from: @FlowSwapPair.Vault) {
     let vault <- from as! @FlowSwapPair.Vault
     let amount = vault.balance
-    destroy vault
+    Burner.burn(<- vault)
     emit TokensBurned(amount: amount)
   }
 
