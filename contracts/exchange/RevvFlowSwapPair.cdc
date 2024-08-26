@@ -64,14 +64,6 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
             Type<FungibleTokenMetadataViews.TotalSupply>()]
   }
 
-  /// Gets a list of the metadata views that this contract supports
-  access(all) view fun getContractViews(resourceType: Type?): [Type] {
-    return [Type<FungibleTokenMetadataViews.FTView>(),
-            Type<FungibleTokenMetadataViews.FTDisplay>(),
-            Type<FungibleTokenMetadataViews.FTVaultData>(),
-            Type<FungibleTokenMetadataViews.TotalSupply>()]
-  }
-
   /// Get a Metadata View
   ///
   /// @param view: The Type of the desired view.
@@ -133,7 +125,7 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
   // out of thin air. A special Minter resource needs to be defined to mint
   // new tokens.
   //
-  access(all) resource Vault: FungibleToken.Provider, FungibleToken.Receiver, FungibleToken.Balance {
+  access(all) resource Vault: FungibleToken.Vault {
 
     // holds the balance of a users tokens
     access(all) var balance: UFix64
@@ -173,7 +165,7 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
     // created Vault to the context that called so it can be deposited
     // elsewhere.
     //
-    access(all) fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
+    access(FungibleToken.Withdraw) fun withdraw(amount: UFix64): @{FungibleToken.Vault} {
       self.balance = self.balance - amount
       emit TokensWithdrawn(amount: amount, from: self.owner?.address)
       return <-create Vault(balance: amount)
@@ -518,13 +510,13 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
     self.account.storage.save(<-vault, to: /storage/revvFlowSwapLpVault)
 
     // Setup internal REVV vault
-    self.token1Vault <- REVV.createEmptyVault() as! @REVV.Vault
+    self.token1Vault <- REVV.createEmptyVault(vaultType: Type<@REVV.Vault>())
 
     // Setup internal FlowToken vault
-    self.token2Vault <- FlowToken.createEmptyVault() as! @FlowToken.Vault
+    self.token2Vault <- FlowToken.createEmptyVault(vaultType: Type<@FlowToken.Vault>())
 
     let admin <- create Admin()
-    self.account.save(<-admin, to: /storage/revvFlowSwapAdmin)
+    self.account.storage.save(<-admin, to: /storage/revvFlowSwapAdmin)
 
     // Emit an event that shows that the contract was initialized
     emit TokensInitialized(initialSupply: self.totalSupply)
