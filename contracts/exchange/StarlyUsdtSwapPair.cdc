@@ -294,6 +294,8 @@ access(all) contract StarlyUsdtSwapPair: FungibleToken {
     emit TokensBurned(amount: amount)
   }
 
+  access(all) resource SwapProxy {}
+
   access(all) resource Admin {
     access(all) fun freeze() {
       StarlyUsdtSwapPair.isFrozen = true

@@ -294,6 +294,8 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
     emit TokensBurned(amount: amount)
   }
 
+  access(all) resource SwapProxy {}
+
   access(all) resource Admin {
     access(all) fun freeze() {
       RevvFlowSwapPair.isFrozen = true
