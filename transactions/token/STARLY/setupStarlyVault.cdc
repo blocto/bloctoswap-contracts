@@ -1,30 +1,39 @@
-import FungibleToken from "../../../contracts/token/FungibleToken.cdc"
-import StarlyToken from "../../../contracts/token/StarlyToken.cdc"
+// This transaction is a template for a transaction
+// to add a Vault resource to their account
+// so that they can use the StarlyToken (STARLY)
 
-transaction {
+import "FungibleToken"
+import "StarlyToken"
+import "ViewResolver"
+import "FungibleTokenMetadataViews"
 
-    prepare(signer: AuthAccount) {
+transaction () {
 
-        // If the account is already set up that's not a problem, but we don't want to replace it
-        if(signer.borrow<&StarlyToken.Vault>(from: StarlyToken.TokenStoragePath) != nil) {
+    prepare(signer: auth(BorrowValue, IssueStorageCapabilityController, PublishCapability, SaveValue) &Account) {
+
+        let vaultData = StarlyToken.resolveContractView(resourceType: nil, viewType: Type<FungibleTokenMetadataViews.FTVaultData>()) as! FungibleTokenMetadataViews.FTVaultData?
+            ?? panic("ViewResolver does not resolve FTVaultData view")
+
+        // Return early if the account already stores a StarlyToken Vault
+        if signer.storage.borrow<&StarlyToken.Vault>(from: vaultData.storagePath) != nil {
             return
         }
-        
-        // Create a new Starly Token Vault and put it in storage
-        signer.save(<-StarlyToken.createEmptyVault(), to: StarlyToken.TokenStoragePath)
 
-        // Create a public capability to the Vault that only exposes
-        // the deposit function through the Receiver interface
-        signer.link<&StarlyToken.Vault{FungibleToken.Receiver}>(
-            StarlyToken.TokenPublicReceiverPath,
-            target: StarlyToken.TokenStoragePath
-        )
+        let vault <- StarlyToken.createEmptyVault(vaultType: Type<@StarlyToken.Vault>())
 
-        // Create a public capability to the Vault that only exposes
-        // the balance field through the Balance interface
-        signer.link<&StarlyToken.Vault{FungibleToken.Balance}>(
-            StarlyToken.TokenPublicBalancePath,
-            target: StarlyToken.TokenStoragePath
+        // Create a new StarlyToken Vault and put it in storage
+        signer.storage.save(<-vault, to: vaultData.storagePath)
+
+        // Create a public capability to the Vault that exposes the Vault interfaces
+        let vaultCap = signer.capabilities.storage.issue<&StarlyToken.Vault>(
+            vaultData.storagePath
         )
+        signer.capabilities.publish(vaultCap, at: vaultData.metadataPath)
+
+        // Create a public Capability to the Vault's Receiver functionality
+        let receiverCap = signer.capabilities.storage.issue<&StarlyToken.Vault>(
+            vaultData.storagePath
+        )
+        signer.capabilities.publish(receiverCap, at: vaultData.receiverPath)
     }
 }

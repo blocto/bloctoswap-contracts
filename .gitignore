@@ -10,3 +10,4 @@ node_modules/
 # Secrets
 flow.mainnet.json
 flow.testnet.json
+keys/

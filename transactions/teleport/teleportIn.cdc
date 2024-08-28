@@ -1,19 +1,18 @@
-import FungibleToken from 0x9a0766d93b6608b7
-import TeleportedTetherToken from 0xf4772588268a160f
+import "FungibleToken"
+import "TeleportedTetherToken"
 
 transaction(amount: UFix64, target: Address, from: String, hash: String) {
-  prepare(teleportAdmin: AuthAccount) {
-    let teleportControlRef = teleportAdmin.getCapability(/private/teleportedTetherTokenTeleportControl)!
-        .borrow<&TeleportedTetherToken.TeleportAdmin{TeleportedTetherToken.TeleportIn}>()
-        ?? panic("Could not borrow a reference to TeleportIn")
-    
+
+  prepare(teleportAdmin: auth(BorrowValue) &Account) {
+
+    let teleportControlRef = teleportAdmin.storage.borrow<auth(TeleportedTetherToken.TeleportControlEntitlement) &{TeleportedTetherToken.TeleportControl}>(from: /storage/teleportedTetherTokenTeleportAdmin)
+      ?? panic("Could not borrow a reference to the teleport control resource")
+
     let vault <- teleportControlRef.teleportIn(amount: amount, from: from.decodeHex(), hash: hash)
 
-    let receiverRef = getAccount(target).getCapability(/public/teleportedTetherTokenReceiver)!
-        .borrow<&TeleportedTetherToken.Vault{FungibleToken.Receiver}>()
-        ?? panic("Could not borrow a reference to Receiver")
+    let receiverRef = getAccount(target).capabilities.borrow<&{FungibleToken.Receiver}>(TeleportedTetherToken.TokenPublicReceiverPath)
+			?? panic("Could not borrow a reference to Receiver")
 
     receiverRef.deposit(from: <- vault)
   }
 }
- 
