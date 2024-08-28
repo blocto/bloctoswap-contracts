@@ -37,7 +37,7 @@
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
 				"mainnet": "5e284fb7cff23a3f",
-				"testnet": "95c5ae7e2a9c29ac"
+				"testnet": "94123cf0021a8cf2"
 			}
 		},
 		"StarlyToken": {
@@ -182,6 +182,10 @@
 				"location": "./keys/revv-flow-swap-admin-mainnet.key"
 			}
 		},
+		"revv-flow-swap-admin-testnet": {
+			"address": "94123cf0021a8cf2",
+			"key": "f26c1edae399f6261ecfce1c0f33eacbb6fafc4f66cc06ee4e4b98705b896497"
+		},
 		"starly-usdt-swap-admin-mainnet": {
 			"address": "6efab66df92c37e4",
 			"key": {
@@ -235,6 +239,9 @@
 				"FlowSwapPair",
 				"BltUsdtSwapPair",
 				"StarlyUsdtSwapPair"
+			],
+			"revv-flow-swap-admin-testnet": [
+				"RevvFlowSwapPair"
 			],
 			"tusdt-admin-testnet": [
 				"TeleportedTetherToken"
