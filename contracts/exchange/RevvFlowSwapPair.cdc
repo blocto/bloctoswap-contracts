@@ -231,11 +231,11 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
     }
 
     access(all) fun depositToken1(from: @REVV.Vault) {
-      self.token1.deposit(from: <- (from as! @{FungibleToken.Vault}))
+      self.token1.deposit(from: <- from)
     }
 
     access(all) fun depositToken2(from: @FlowToken.Vault) {
-      self.token2.deposit(from: <- (from as! @{FungibleToken.Vault}))
+      self.token2.deposit(from: <- from)
     }
 
     access(all) fun withdrawToken1(): @REVV.Vault {
@@ -288,7 +288,7 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
   // total supply in the Vault destructor.
   //
   access(contract) fun burnTokens(from: @RevvFlowSwapPair.Vault) {
-    let vault <- from as! @RevvFlowSwapPair.Vault
+    let vault <- from
     let amount = vault.balance
     Burner.burn(<- vault)
     emit TokensBurned(amount: amount)
@@ -409,7 +409,7 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
 
     assert(token2Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token1Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
+    self.token1Vault.deposit(from: <- from)
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
 
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @FlowToken.Vault)
@@ -429,10 +429,10 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
 
     assert(token1Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token2Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
+    self.token2Vault.deposit(from: <- from)
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
 
-    return <- (self.token1Vault.withdraw(amount: token1Amount) as! @REVV.Vault)
+    return <- self.token1Vault.withdraw(amount: token1Amount)
   }
 
   // Used to add liquidity without minting new liquidity token
@@ -490,7 +490,7 @@ access(all) contract RevvFlowSwapPair: FungibleToken {
     // Burn liquidity tokens and withdraw
     RevvFlowSwapPair.burnTokens(from: <- from)
 
-    let token1Vault <- RevvFlowSwapPair.token1Vault.withdraw(amount: (RevvFlowSwapPair.token1Vault.balance * liquidityPercentage) / 10000.0) as! @REVV.Vault
+    let token1Vault <- RevvFlowSwapPair.token1Vault.withdraw(amount: (RevvFlowSwapPair.token1Vault.balance * liquidityPercentage) / 10000.0)
     let token2Vault <- RevvFlowSwapPair.token2Vault.withdraw(amount: (RevvFlowSwapPair.token2Vault.balance * liquidityPercentage) / 10000.0) as! @FlowToken.Vault
 
     let tokenBundle <- RevvFlowSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)
