@@ -231,11 +231,11 @@ access(all) contract StarlyUsdtSwapPair: FungibleToken {
     }
 
     access(all) fun depositToken1(from: @StarlyToken.Vault) {
-      self.token1.deposit(from: <- (from as! @{FungibleToken.Vault}))
+      self.token1.deposit(from: <- from)
     }
 
     access(all) fun depositToken2(from: @TeleportedTetherToken.Vault) {
-      self.token2.deposit(from: <- (from as! @{FungibleToken.Vault}))
+      self.token2.deposit(from: <- from)
     }
 
     access(all) fun withdrawToken1(): @StarlyToken.Vault {
@@ -288,11 +288,13 @@ access(all) contract StarlyUsdtSwapPair: FungibleToken {
   // total supply in the Vault destructor.
   //
   access(contract) fun burnTokens(from: @StarlyUsdtSwapPair.Vault) {
-    let vault <- from as! @StarlyUsdtSwapPair.Vault
+    let vault <- from
     let amount = vault.balance
     Burner.burn(<- vault)
     emit TokensBurned(amount: amount)
   }
+
+  access(all) resource SwapProxy {}
 
   access(all) resource Admin {
     access(all) fun freeze() {
@@ -407,7 +409,7 @@ access(all) contract StarlyUsdtSwapPair: FungibleToken {
 
     assert(token2Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token1Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
+    self.token1Vault.deposit(from: <- from)
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
 
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
@@ -427,10 +429,10 @@ access(all) contract StarlyUsdtSwapPair: FungibleToken {
 
     assert(token1Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token2Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
+    self.token2Vault.deposit(from: <- from)
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
 
-    return <- (self.token1Vault.withdraw(amount: token1Amount) as! @StarlyToken.Vault)
+    return <- self.token1Vault.withdraw(amount: token1Amount)
   }
 
   // Used to add liquidity without minting new liquidity token
@@ -488,7 +490,7 @@ access(all) contract StarlyUsdtSwapPair: FungibleToken {
     // Burn liquidity tokens and withdraw
     StarlyUsdtSwapPair.burnTokens(from: <- from)
 
-    let token1Vault <- StarlyUsdtSwapPair.token1Vault.withdraw(amount: (StarlyUsdtSwapPair.token1Vault.balance * liquidityPercentage) / 10000.0) as! @StarlyToken.Vault
+    let token1Vault <- StarlyUsdtSwapPair.token1Vault.withdraw(amount: (StarlyUsdtSwapPair.token1Vault.balance * liquidityPercentage) / 10000.0)
     let token2Vault <- StarlyUsdtSwapPair.token2Vault.withdraw(amount: (StarlyUsdtSwapPair.token2Vault.balance * liquidityPercentage) / 10000.0) as! @TeleportedTetherToken.Vault
 
     let tokenBundle <- StarlyUsdtSwapPair.createTokenBundle(fromToken1: <- token1Vault, fromToken2: <- token2Vault)

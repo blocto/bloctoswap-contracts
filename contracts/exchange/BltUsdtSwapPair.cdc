@@ -231,11 +231,11 @@ access(all) contract BltUsdtSwapPair: FungibleToken {
     }
 
     access(all) fun depositToken1(from: @BloctoToken.Vault) {
-      self.token1.deposit(from: <- (from as! @{FungibleToken.Vault}))
+      self.token1.deposit(from: <- from)
     }
 
     access(all) fun depositToken2(from: @TeleportedTetherToken.Vault) {
-      self.token2.deposit(from: <- (from as! @{FungibleToken.Vault}))
+      self.token2.deposit(from: <- from)
     }
 
     access(all) fun withdrawToken1(): @BloctoToken.Vault {
@@ -288,11 +288,13 @@ access(all) contract BltUsdtSwapPair: FungibleToken {
   // total supply in the Vault destructor.
   //
   access(contract) fun burnTokens(from: @BltUsdtSwapPair.Vault) {
-    let vault <- from as! @BltUsdtSwapPair.Vault
+    let vault <- from
     let amount = vault.balance
     Burner.burn(<- vault)
     emit TokensBurned(amount: amount)
   }
+
+  access(all) resource SwapProxy {}
 
   access(all) resource Admin {
     access(all) fun freeze() {
@@ -407,7 +409,7 @@ access(all) contract BltUsdtSwapPair: FungibleToken {
 
     assert(token2Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token1Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
+    self.token1Vault.deposit(from: <- from)
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 1)
 
     return <- (self.token2Vault.withdraw(amount: token2Amount) as! @TeleportedTetherToken.Vault)
@@ -427,7 +429,7 @@ access(all) contract BltUsdtSwapPair: FungibleToken {
 
     assert(token1Amount > 0.0, message: "Exchanged amount too small")
 
-    self.token2Vault.deposit(from: <- (from as! @{FungibleToken.Vault}))
+    self.token2Vault.deposit(from: <- from)
     emit Trade(token1Amount: token1Amount, token2Amount: token2Amount, side: 2)
 
     return <- (self.token1Vault.withdraw(amount: token1Amount) as! @BloctoToken.Vault)
