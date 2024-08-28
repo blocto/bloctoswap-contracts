@@ -1,250 +1,244 @@
 {
-  "dependencies": {
+	"contracts": {
+		"BloctoToken": {
+			"source": "./contracts/token/BloctoToken.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "0f9df91c9121c460",
+				"testnet": "653cfe36d146e7be"
+			}
+		},
+		"BltUsdtSwapPair": {
+			"source": "./contracts/exchange/BltUsdtSwapPair.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "fcb06a5ae5b21a2d",
+				"testnet": "95c5ae7e2a9c29ac"
+			}
+		},
+		"FlowSwapPair": {
+			"source": "./contracts/exchange/FlowSwapPair.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "c6c77b9f5c7a378f",
+				"testnet": "95c5ae7e2a9c29ac"
+			}
+		},
+		"FlowToken": {
+			"source": "./contracts/token/FlowToken.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1654653399040a61",
+				"testnet": "7e60df042a9c0868"
+			}
+		},
+		"RevvFlowSwapPair": {
+			"source": "./contracts/exchange/RevvFlowSwapPair.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "5e284fb7cff23a3f",
+				"testnet": "95c5ae7e2a9c29ac"
+			}
+		},
+		"StarlyToken": {
+			"source": "./contracts/token/StarlyToken.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "142fa6570b62fd97",
+				"testnet": "f63219072aaddd50"
+			}
+		},
+		"StarlyUsdtSwapPair": {
+			"source": "./contracts/exchange/StarlyUsdtSwapPair.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "6efab66df92c37e4",
+				"testnet": "95c5ae7e2a9c29ac"
+			}
+		},
+		"TeleportedTetherToken": {
+			"source": "./contracts/token/TeleportedTetherToken.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "cfdd90d4a00f7b5b",
+				"testnet": "2d270db9ac8c7fef"
+			}
+		}
+	},
+	"dependencies": {
 		"Burner": {
 			"source": "testnet://9a0766d93b6608b7.Burner",
 			"hash": "71af18e227984cd434a3ad00bb2f3618b76482842bae920ee55662c37c8bf331",
 			"aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "previewnet": "0xa0225e7000ac82a9",
-        "testnet": "0x9a0766d93b6608b7",
-        "mainnet": "0xf233dcee88fe0abe"
-      }
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "f233dcee88fe0abe",
+				"previewnet": "a0225e7000ac82a9",
+				"testnet": "9a0766d93b6608b7"
+			}
 		},
 		"FungibleToken": {
 			"source": "testnet://9a0766d93b6608b7.FungibleToken",
 			"hash": "154d9000cc0b992664c1d315826a4bc47e744fbc7f2e99daf823e5101945042a",
 			"aliases": {
-        "emulator": "0xee82856bf20e2aa6",
-        "testnet": "0x9a0766d93b6608b7",
-        "mainnet": "0xf233dcee88fe0abe"
-      }
+				"emulator": "ee82856bf20e2aa6",
+				"mainnet": "f233dcee88fe0abe",
+				"previewnet": "a0225e7000ac82a9",
+				"testnet": "9a0766d93b6608b7"
+			}
 		},
 		"FungibleTokenMetadataViews": {
 			"source": "testnet://9a0766d93b6608b7.FungibleTokenMetadataViews",
 			"hash": "64ec97395c0a3958510ea663563f59d5a6beb7943d69b903db94c11d76be6296",
 			"aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "previewnet": "0xa0225e7000ac82a9",
-        "mainnet": "0xf233dcee88fe0abe",
-        "testnet": "0x9a0766d93b6608b7"
-      }
+				"emulator": "ee82856bf20e2aa6",
+				"mainnet": "f233dcee88fe0abe",
+				"previewnet": "a0225e7000ac82a9",
+				"testnet": "9a0766d93b6608b7"
+			}
 		},
 		"MetadataViews": {
 			"source": "testnet://631e88ae7f1d7c20.MetadataViews",
 			"hash": "77e2c3c4afb855af657ecae6611a99acf47a102144c68f4663de42ae700adf5b",
 			"aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "previewnet": "0xb6763b4399a888c8",
-        "mainnet": "0x1d7e57aa55817448",
-        "testnet": "0x631e88ae7f1d7c20"
-      }
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
+				"previewnet": "b6763b4399a888c8",
+				"testnet": "631e88ae7f1d7c20"
+			}
 		},
 		"NonFungibleToken": {
 			"source": "testnet://631e88ae7f1d7c20.NonFungibleToken",
 			"hash": "ea1b5fa55b6648064c77a6fd83084a3a0be2a6f4386b3b259c89e4f62ab8f6c0",
 			"aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "previewnet": "0xb6763b4399a888c8",
-        "mainnet": "0x1d7e57aa55817448",
-        "testnet": "0x631e88ae7f1d7c20"
-      }
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
+				"previewnet": "b6763b4399a888c8",
+				"testnet": "631e88ae7f1d7c20"
+			}
+		},
+		"REVV": {
+			"source": "testnet://9c97c49c842d0cd1.REVV",
+			"hash": "45d13e20213a2339bba3239f75f5e9700f1a321cc800ab7fcb29c0cf2d5f9937",
+			"aliases": {
+				"mainnet": "d01e482eb680ec9f",
+				"testnet": "9c97c49c842d0cd1"
+			}
 		},
 		"ViewResolver": {
 			"source": "testnet://631e88ae7f1d7c20.ViewResolver",
 			"hash": "374a1994046bac9f6228b4843cb32393ef40554df9bd9907a702d098a2987bde",
 			"aliases": {
-        "emulator": "0xf8d6e0586b0a20c7",
-        "previewnet": "0xb6763b4399a888c8",
-        "mainnet": "0x1d7e57aa55817448",
-        "testnet": "0x631e88ae7f1d7c20"
-      }
+				"emulator": "f8d6e0586b0a20c7",
+				"mainnet": "1d7e57aa55817448",
+				"previewnet": "b6763b4399a888c8",
+				"testnet": "631e88ae7f1d7c20"
+			}
 		}
 	},
-  "contracts": {
-    "FlowToken": {
-      "source": "./contracts/token/FlowToken.cdc",
-      "aliases": {
-        "testnet": "0x7e60df042a9c0868",
-        "mainnet": "0x1654653399040a61",
-        "emulator": "0xf8d6e0586b0a20c7"
-      }
-    },
-    "BloctoToken": {
-      "source": "./contracts/token/BloctoToken.cdc",
-      "aliases": {
-        "testnet": "0x653cfe36d146e7be",
-        "mainnet": "0x0f9df91c9121c460",
-        "emulator": "0xf8d6e0586b0a20c7"
-      }
-    },
-    "BltUsdtSwapPair": {
-      "source": "./contracts/exchange/BltUsdtSwapPair.cdc",
-      "aliases": {
-        "testnet": "0x95c5ae7e2a9c29ac",
-        "mainnet": "0xfcb06a5ae5b21a2d",
-        "emulator": "0xf8d6e0586b0a20c7"
-      }
-    },
-    "FlowSwapPair": {
-      "source": "./contracts/exchange/FlowSwapPair.cdc",
-      "aliases": {
-        "testnet": "0x95c5ae7e2a9c29ac",
-        "mainnet": "0xc6c77b9f5c7a378f",
-        "emulator": "0xf8d6e0586b0a20c7"
-      }
-    },
-    "REVV": {
-      "source": "./contracts/token/REVV.cdc",
-      "aliases": {
-        "testnet": "0x14ca72fa4d45d2c3",
-        "mainnet": "0xd01e482eb680ec9f",
-        "emulator": "0xf8d6e0586b0a20c7"
-      }
-    },
-    "RevvFlowSwapPair": {
-      "source": "./contracts/exchange/RevvFlowSwapPair.cdc",
-      "aliases": {
-        "testnet": "0x95c5ae7e2a9c29ac",
-        "mainnet": "0x5e284fb7cff23a3f",
-        "emulator": "0xf8d6e0586b0a20c7"
-      }
-    },
-    "StarlyUsdtSwapPair": {
-      "source": "./contracts/exchange/StarlyUsdtSwapPair.cdc",
-      "aliases": {
-        "testnet": "0x95c5ae7e2a9c29ac",
-        "mainnet": "0x6efab66df92c37e4",
-        "emulator": "0xf8d6e0586b0a20c7"
-      }
-    },
-    "StarlyToken": {
-      "source": "./contracts/token/StarlyToken.cdc",
-      "aliases": {
-        "testnet": "0xf63219072aaddd50",
-        "mainnet": "0x142fa6570b62fd97",
-        "emulator": "0xf8d6e0586b0a20c7"
-      }
-    },
-    "TeleportedTetherToken": {
-      "source": "./contracts/token/TeleportedTetherToken.cdc",
-      "aliases": {
-        "testnet": "0x2d270db9ac8c7fef",
-        "mainnet": "0xcfdd90d4a00f7b5b",
-        "emulator": "0xf8d6e0586b0a20c7"
-      }
-    }
-  },
-  "networks": {
-    "emulator": "127.0.0.1:3569",
-    "previewnet": "access.previewnet.nodes.onflow.org:9000",
-    "mainnet": "access.mainnet.nodes.onflow.org:9000",
-    "testnet": "access.devnet.nodes.onflow.org:9000"
-  },
-  "accounts": {
-    "emulator-account": {
-      "address": "f8d6e0586b0a20c7",
-      "key": "eb4347b08ebd2f74d38bec1026b07430fe04510c95afe8534735677a3410dd87"
-    },
-    "blt-admin-testnet": {
-			"address": "0x653cfe36d146e7be",
+	"networks": {
+		"emulator": "127.0.0.1:3569",
+		"mainnet": "access.mainnet.nodes.onflow.org:9000",
+		"previewnet": "access.previewnet.nodes.onflow.org:9000",
+		"testnet": "access.devnet.nodes.onflow.org:9000"
+	},
+	"accounts": {
+		"blt-admin-testnet": {
+			"address": "653cfe36d146e7be",
 			"key": "600c63b7dd45898b8411d9e2d2717987bbadda02aa10e9cd29f49ebe6d8ed047"
 		},
-    "flow-swap-admin-testnet": {
-      "address": "0x95c5ae7e2a9c29ac",
-      "key": {
-        "type": "file",
-        "signatureAlgorithm": "ECDSA_secp256k1",
-        "hashAlgorithm": "SHA3_256",
-        "location": "./keys/flow-swap-admin-testnet.key"
-      }
-    },
-    "tusdt-admin-testnet": {
-			"address": "0x2d270db9ac8c7fef",
+		"blt-usdt-swap-admin-mainnet": {
+			"address": "fcb06a5ae5b21a2d",
+			"key": {
+				"type": "file",
+				"signatureAlgorithm": "ECDSA_secp256k1",
+				"location": "./keys/blt-usdt-swap-admin-mainnet.key"
+			}
+		},
+		"emulator-account": {
+			"address": "f8d6e0586b0a20c7",
+			"key": "eb4347b08ebd2f74d38bec1026b07430fe04510c95afe8534735677a3410dd87"
+		},
+		"flow-swap-admin-mainnet": {
+			"address": "c6c77b9f5c7a378f",
+			"key": {
+				"type": "file",
+				"signatureAlgorithm": "ECDSA_secp256k1",
+				"location": "./keys/flow-swap-admin-mainnet.key"
+			}
+		},
+		"flow-swap-admin-testnet": {
+			"address": "95c5ae7e2a9c29ac",
+			"key": {
+				"type": "file",
+				"signatureAlgorithm": "ECDSA_secp256k1",
+				"location": "./keys/flow-swap-admin-testnet.key"
+			}
+		},
+		"revv-flow-swap-admin-mainnet": {
+			"address": "5e284fb7cff23a3f",
+			"key": {
+				"type": "file",
+				"signatureAlgorithm": "ECDSA_secp256k1",
+				"location": "./keys/revv-flow-swap-admin-mainnet.key"
+			}
+		},
+		"starly-usdt-swap-admin-mainnet": {
+			"address": "6efab66df92c37e4",
+			"key": {
+				"type": "file",
+				"signatureAlgorithm": "ECDSA_secp256k1",
+				"location": "./keys/starly-usdt-swap-admin-mainnet.key"
+			}
+		},
+		"tusdt-admin-testnet": {
+			"address": "2d270db9ac8c7fef",
 			"key": "c5d43c4fc59584a4f4e41a8ef40772d0a7d89b2894f80d68a7cab42c34ebb29f"
 		},
-    "tusdt-teleport-admin-testnet": {
-			"address": "0xc26a86fd71f30119",
+		"tusdt-teleport-admin-testnet": {
+			"address": "c26a86fd71f30119",
 			"key": "83c686f118f814f4b4cf607ca10c2fabd084078b06f0d72d4364e3a19a6996d4"
 		},
-    "user-testnet": {
-      "address": "0x67f67290a2622312",
-      "key": {
-        "type": "hex",
-        "index": 0,
-        "signatureAlgorithm": "ECDSA_secp256k1",
-        "hashAlgorithm": "SHA3_256",
-        "privateKey": "fc2b272db5888de150d3de1919307321e291915eb8df04f251a9d683e07747b7"
-      }
-    },
-    "flow-swap-admin-mainnet": {
-      "address": "0xc6c77b9f5c7a378f",
-      "key": {
-        "type": "file",
-        "signatureAlgorithm": "ECDSA_secp256k1",
-        "hashAlgorithm": "SHA3_256",
-        "location": "./keys/flow-swap-admin-mainnet.key"
-      }
-    },
-    "blt-usdt-swap-admin-mainnet": {
-      "address": "0xfcb06a5ae5b21a2d",
-      "key": {
-        "type": "file",
-        "signatureAlgorithm": "ECDSA_secp256k1",
-        "hashAlgorithm": "SHA3_256",
-        "location": "./keys/blt-usdt-swap-admin-mainnet.key"
-      }
-    },
-    "revv-flow-swap-admin-mainnet": {
-      "address": "0x5e284fb7cff23a3f",
-      "key": {
-        "type": "file",
-        "signatureAlgorithm": "ECDSA_secp256k1",
-        "hashAlgorithm": "SHA3_256",
-        "location": "./keys/revv-flow-swap-admin-mainnet.key"
-      }
-    },
-    "starly-usdt-swap-admin-mainnet": {
-      "address": "0x6efab66df92c37e4",
-      "key": {
-        "type": "file",
-        "signatureAlgorithm": "ECDSA_secp256k1",
-        "hashAlgorithm": "SHA3_256",
-        "location": "./keys/starly-usdt-swap-admin-mainnet.key"
-      }
-    }
-  },
-  "deployments": {
-    "emulator": {
-      "emulator-account": [
-        "FlowSwapPair"
-      ]
-    },
-    "testnet": {
-      "blt-admin-testnet": [
-        "BloctoToken"
-      ],
-      "flow-swap-admin-testnet": [
-        "FlowSwapPair",
-        "BltUsdtSwapPair",
-        "StarlyUsdtSwapPair"
-      ],
-      "tusdt-admin-testnet": [
-        "TeleportedTetherToken"
-      ]
-    },
-    "mainnet": {
-      "flow-swap-admin-mainnet": [
-        "FlowSwapPair"
-      ],
-      "blt-usdt-swap-admin-mainnet": [
-        "BltUsdtSwapPair"
-      ],
-      "revv-flow-swap-admin-mainnet": [
-        "RevvFlowSwapPair"
-      ],
-      "starly-usdt-swap-admin-mainnet": [
-        "StarlyUsdtSwapPair"
-      ]
-    }
-  }
+		"user-testnet": {
+			"address": "67f67290a2622312",
+			"key": {
+				"type": "hex",
+				"signatureAlgorithm": "ECDSA_secp256k1",
+				"privateKey": "fc2b272db5888de150d3de1919307321e291915eb8df04f251a9d683e07747b7"
+			}
+		}
+	},
+	"deployments": {
+		"emulator": {
+			"emulator-account": [
+				"FlowSwapPair"
+			]
+		},
+		"mainnet": {
+			"blt-usdt-swap-admin-mainnet": [
+				"BltUsdtSwapPair"
+			],
+			"flow-swap-admin-mainnet": [
+				"FlowSwapPair"
+			],
+			"revv-flow-swap-admin-mainnet": [
+				"RevvFlowSwapPair"
+			],
+			"starly-usdt-swap-admin-mainnet": [
+				"StarlyUsdtSwapPair"
+			]
+		},
+		"testnet": {
+			"blt-admin-testnet": [
+				"BloctoToken"
+			],
+			"flow-swap-admin-testnet": [
+				"FlowSwapPair",
+				"BltUsdtSwapPair",
+				"StarlyUsdtSwapPair"
+			],
+			"tusdt-admin-testnet": [
+				"TeleportedTetherToken"
+			]
+		}
+	}
 }

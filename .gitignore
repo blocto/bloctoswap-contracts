@@ -6,6 +6,7 @@
 # Built artifacts
 build/
 node_modules/
+imports/
 
 # Secrets
 flow.mainnet.json
