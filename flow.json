@@ -37,7 +37,7 @@
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
 				"mainnet": "5e284fb7cff23a3f",
-				"testnet": "94123cf0021a8cf2"
+				"testnet": "96d9806d5deac85f"
 			}
 		},
 		"StarlyToken": {
@@ -117,11 +117,11 @@
 			}
 		},
 		"REVV": {
-			"source": "testnet://9c97c49c842d0cd1.REVV",
-			"hash": "45d13e20213a2339bba3239f75f5e9700f1a321cc800ab7fcb29c0cf2d5f9937",
+			"source": "testnet://cdb09c8fef7e3c15.REVV",
+			"hash": "a94263240b923a425fbb4dbeb9131eccac315db635e3b02afa759ff51c56a6fe",
 			"aliases": {
 				"mainnet": "d01e482eb680ec9f",
-				"testnet": "9c97c49c842d0cd1"
+				"testnet": "cdb09c8fef7e3c15"
 			}
 		},
 		"ViewResolver": {
@@ -183,8 +183,8 @@
 			}
 		},
 		"revv-flow-swap-admin-testnet": {
-			"address": "94123cf0021a8cf2",
-			"key": "f26c1edae399f6261ecfce1c0f33eacbb6fafc4f66cc06ee4e4b98705b896497"
+			"address": "96d9806d5deac85f",
+			"key": "f0e43068bc53e00c765feca484b11d7f9547cc6b1efc23cb1c16aebfca918856"
 		},
 		"starly-usdt-swap-admin-mainnet": {
 			"address": "6efab66df92c37e4",
